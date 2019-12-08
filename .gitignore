@@ -1,2 +1,8 @@
 .DS_Store
-cash-project/
+OpenCV Cash Labeling/cash-project/
+PyTorch Cash Classification/pytorchenv/
+PyTorch Cash Classification/cash/
+OpenCV Cash Labeling/dataset/
+OpenCV Cash Labeling/experiment frames/
+OpenCV Cash Labeling/experiment/
+OpenCV Cash Labeling/.vscode/

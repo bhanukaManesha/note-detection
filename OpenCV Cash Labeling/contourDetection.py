@@ -4,7 +4,13 @@ import numpy as np
 frameWidth = 640
 frameHeight = 480
 
-cap = cv2.VideoCapture('train/sample9.mov')
+# Define currency
+currency = 1
+side = "front"
+
+
+
+cap = cv2.VideoCapture('dataset/videos/' + str(currency) + '_'+ side + '.mov')
 
 cap.set(3, frameWidth)
 cap.set(4, frameHeight)
@@ -14,29 +20,54 @@ def empty():
 
 cv2.namedWindow("Parameters")
 cv2.resizeWindow("Parameters",640, 240)
-cv2.createTrackbar("Threshold1", "Parameters", 144, 244, empty)
-cv2.createTrackbar("Threshold2", "Parameters", 137, 255, empty)
-cv2.createTrackbar("Area", "Parameters", 250000, 550000, empty)
+cv2.createTrackbar("Threshold1", "Parameters", 40, 244, empty)
+cv2.createTrackbar("Threshold2", "Parameters", 125, 255, empty)
+cv2.createTrackbar("Area", "Parameters", 60000, 550000, empty)
 
-
-def getContours(img,imgContour):
+def getContours(img,imgContour, count):
     contours, hierarchy = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+
+    
     for cnt in contours:
         area = cv2.contourArea(cnt)
         areaMin = cv2.getTrackbarPos("Area", "Parameters")
-        # areaMin = 50000
         if area > areaMin:
             cv2.drawContours(imgContour, cnt, -1, (255, 0, 255), 7)
             peri = cv2.arcLength(cnt, True)
             approx = cv2.approxPolyDP(cnt, 0.02 * peri, True)
-            print(len(approx))
-            x , y , w, h = cv2.boundingRect(approx)
-            cv2.rectangle(imgContour, (x , y ), (x + w , y + h ), (0, 255, 0), 5)
 
-            cv2.putText(imgContour, "Points: " + str(len(approx)), (x + w + 20, y + 20), cv2.FONT_HERSHEY_COMPLEX, .7,
-                        (0, 255, 0), 2)
-            cv2.putText(imgContour, "Area: " + str(int(area)), (x + w + 20, y + 45), cv2.FONT_HERSHEY_COMPLEX, 0.7,
-                        (0, 255, 0), 2)
+            x , y , w, h = cv2.boundingRect(approx)
+
+            if x + 128 < y+h  and y + 128 < x+w :
+                cv2.rectangle(imgContour, (x , y ), (x + w , y + h ), (0, 255, 0), 5)
+
+                
+
+                # Resize
+                border_v = 0
+                border_h = 0
+                IMG_COL = 128
+                IMG_ROW = 128
+
+                extractImg = imgFinal[x:y+h, y:x+w]
+
+                if (IMG_COL/IMG_ROW) >= (extractImg.shape[0]/extractImg.shape[1]):
+                    border_v = int((((IMG_COL/IMG_ROW)*extractImg.shape[1])-extractImg.shape[0])/2)
+                else:
+                    border_h = int((((IMG_ROW/IMG_COL)*extractImg.shape[0])-extractImg.shape[1])/2)
+                extractImg = cv2.copyMakeBorder(extractImg, border_v, border_v, border_h, border_h, cv2.BORDER_CONSTANT, 0)
+                finalImg = cv2.resize(extractImg, (IMG_ROW, IMG_COL))
+
+                cv2.imwrite("dataset/image/RM"+ str(currency)  + "/rm"+ str(currency) + "_"+ side + "_" +"%d.jpg" % count, finalImg)
+
+                print(str(count) + ": " +  str(w) + " " + str(h) + " " + str(y+h) + " " + str(x+w))
+
+                cv2.putText(imgContour, "Points: " + str(len(approx)), (x + w + 20, y + 20), cv2.FONT_HERSHEY_COMPLEX, .7,
+                            (0, 255, 0), 2)
+                cv2.putText(imgContour, "Area: " + str(int(area)), (x + w + 20, y + 45), cv2.FONT_HERSHEY_COMPLEX, 0.7,
+                            (0, 255, 0), 2)
+
+                    
 
 
 def stackImages(scale,imgArray):
@@ -70,39 +101,33 @@ def stackImages(scale,imgArray):
         ver = hor
     return ver
 
+count = 0
 while True:
-	sucess, img = cap.read()
-	# img = cv2.imread('extract/sample7/frame7.jpg') 
+    sucess, img = cap.read()
 
-	imgContour = img.copy()
+    imgContour = img.copy()
+    imgFinal = img.copy()
 
-	imgBlur = cv2.GaussianBlur(img, (9,9), 1)
-	imgGray = cv2.cvtColor(imgBlur, cv2.COLOR_BGR2GRAY)
+    imgBlur = cv2.GaussianBlur(img, (9,9), 1)
+    imgGray = cv2.cvtColor(imgBlur, cv2.COLOR_BGR2GRAY)
 
-	threshold1 = cv2.getTrackbarPos("Threshold1", "Parameters")
-	threshold2 = cv2.getTrackbarPos("Threshold2", "Parameters")
+    threshold1 = cv2.getTrackbarPos("Threshold1", "Parameters")
+    threshold2 = cv2.getTrackbarPos("Threshold2", "Parameters")
 
-	imgCanny = cv2.Canny(imgGray, threshold1, threshold2)
+    imgCanny = cv2.Canny(imgGray, threshold1, threshold2)
 
-	kernal = np.ones((5,5))
-	imgDil = cv2.dilate(imgCanny, kernal, iterations=1)
+    kernal = np.ones((5,5))
+    imgDil = cv2.dilate(imgCanny, kernal, iterations=1)
 
+    getContours(imgDil, imgContour, count)
 
-
-	getContours(imgDil, imgContour)
-
-
+    imgStack = stackImages(0.5, ([img, imgCanny], [imgDil, imgContour]))
 
 
-
-	imgStack = stackImages(0.5, ([img, imgCanny], [imgDil, imgContour]))
-
-
-
-	cv2.imshow("Result", imgStack)
+    cv2.imshow("Result", imgStack)
+    count += 1
 
 
-
-	if cv2.waitKey(1) & 0xFF == ord('q'):
-		break
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
 
