@@ -1,10 +1,12 @@
 import cv2
 import numpy as np
 
-frameWidth = 640
-frameHeight = 480
+frameWidth = 320
+frameHeight = 240
 
 # Script parameters
+
+testingMode = True
 collectData = False
 currency = 1
 side = "front"
@@ -20,19 +22,21 @@ def empty():
 
 cv2.namedWindow("Parameters")
 cv2.resizeWindow("Parameters",640, 240)
-cv2.createTrackbar("Threshold1", "Parameters", 40, 244, empty)
-cv2.createTrackbar("Threshold2", "Parameters", 125, 255, empty)
-cv2.createTrackbar("Area", "Parameters", 60000, 550000, empty)
+cv2.createTrackbar("Threshold1", "Parameters", 45, 244, empty)
+cv2.createTrackbar("Threshold2", "Parameters", 70, 255, empty)
+cv2.createTrackbar("AreaMin", "Parameters", 180000, 550000, empty)
+cv2.createTrackbar("AreaMax", "Parameters", 350000, 550000, empty)
 
 def getContours(img,imgContour, count):
     contours, hierarchy = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     
     for cnt in contours:
         area = cv2.contourArea(cnt)
-        areaMin = cv2.getTrackbarPos("Area", "Parameters")
+        areaMin = cv2.getTrackbarPos("AreaMin", "Parameters")
+        areaMax = cv2.getTrackbarPos("AreaMax", "Parameters")
 
         # if the area is more than the minimium
-        if area > areaMin:
+        if area > areaMin and area < areaMax:
 
             # Draw the contours on the image
             cv2.drawContours(imgContour, cnt, -1, (255, 0, 255), 7)
@@ -44,36 +48,39 @@ def getContours(img,imgContour, count):
             # Getting the bounding box
             x , y , w, h = cv2.boundingRect(approx)
 
+
+            
+
             # Extract only if the image size is more than 128
-            if x + 128 < y+h  and y + 128 < x+w :
-                cv2.rectangle(imgContour, (x , y ), (x + w , y + h ), (0, 255, 0), 5)
+            
+            cv2.rectangle(imgContour, (x , y ), (x + w , y + h ), (0, 255, 0), 5)
 
-                # Resize
-                border_v = 0
-                border_h = 0
-                IMG_COL = 128
-                IMG_ROW = 128
+            # Resize
+            border_v = 0
+            border_h = 0
+            IMG_COL = 128
+            IMG_ROW = 128
 
-                extractImg = imgFinal[x:y+h, y:x+w]
+            extractImg = imgFinal[x:y+h, y:x+w]
 
-                if (IMG_COL/IMG_ROW) >= (extractImg.shape[0]/extractImg.shape[1]):
-                    border_v = int((((IMG_COL/IMG_ROW)*extractImg.shape[1])-extractImg.shape[0])/2)
-                else:
-                    border_h = int((((IMG_ROW/IMG_COL)*extractImg.shape[0])-extractImg.shape[1])/2)
-                extractImg = cv2.copyMakeBorder(extractImg, border_v, border_v, border_h, border_h, cv2.BORDER_CONSTANT, 0)
-                finalImg = cv2.resize(extractImg, (IMG_ROW, IMG_COL))
+            if (IMG_COL/IMG_ROW) >= (extractImg.shape[0]/extractImg.shape[1]):
+                border_v = int((((IMG_COL/IMG_ROW)*extractImg.shape[1])-extractImg.shape[0])/2)
+            else:
+                border_h = int((((IMG_ROW/IMG_COL)*extractImg.shape[0])-extractImg.shape[1])/2)
+            extractImg = cv2.copyMakeBorder(extractImg, border_v, border_v, border_h, border_h, cv2.BORDER_CONSTANT, 0)
+            finalImg = cv2.resize(extractImg, (IMG_ROW, IMG_COL))
 
-                if collectData :
-                    cv2.imwrite("dataset/image/RM"+ str(currency)  + "/rm"+ str(currency) + "_"+ side + "_" +"%d.jpg" % count, finalImg)
-                    print(str(count) + ": " +  str(w) + " " + str(h) + " " + str(y+h) + " " + str(x+w))
+            if collectData :
+                cv2.imwrite("dataset/image/RM"+ str(currency)  + "/rm"+ str(currency) + "_"+ side + "_" +"%d.jpg" % count, finalImg)
+                print(str(count) + ": " +  str(w) + " " + str(h) + " " + str(y+h) + " " + str(x+w))
 
-                cv2.putText(imgContour, "Points: " + str(len(approx)), (x + w + 20, y + 20), cv2.FONT_HERSHEY_COMPLEX, .7,
-                            (0, 255, 0), 2)
-                cv2.putText(imgContour, "Area: " + str(int(area)), (x + w + 20, y + 45), cv2.FONT_HERSHEY_COMPLEX, 0.7,
-                            (0, 255, 0), 2)
+            if testingMode :
+                cv2.imwrite("testing/%d.jpg" % count, finalImg)
 
-                    
-
+            cv2.putText(imgContour, "Points: " + str(len(approx)), (x + w + 20, y + 20), cv2.FONT_HERSHEY_COMPLEX, .7,
+                        (0, 255, 0), 2)
+            cv2.putText(imgContour, "Area: " + str(int(area)), (x + w + 20, y + 45), cv2.FONT_HERSHEY_COMPLEX, 0.7,
+                        (0, 255, 0), 2)
 
 def stackImages(scale,imgArray):
     rows = len(imgArray)
@@ -116,10 +123,16 @@ while True:
 
     # Take copy of the frame
     imgContour = img.copy()
+    imgRB = img.copy()
     imgFinal = img.copy()
 
+    # Remove the green channel
+    imgRB[:,:,0] = 0
+    
+    imgRB[:,:,2] = 0
+
     # Add gaussian blur
-    imgBlur = cv2.GaussianBlur(img, (9,9), 1)
+    imgBlur = cv2.GaussianBlur(imgRB, (9,9), 1)
 
     # Convert the image to gray
     imgGray = cv2.cvtColor(imgBlur, cv2.COLOR_BGR2GRAY)
@@ -129,7 +142,7 @@ while True:
     threshold2 = cv2.getTrackbarPos("Threshold2", "Parameters")
 
     # Get the canny edge image
-    imgCanny = cv2.Canny(imgGray, threshold1, threshold2)
+    imgCanny = cv2.Canny(imgBlur, threshold1, threshold2)
 
     # Create a kernal of ones
     kernal = np.ones((5,5))
@@ -141,7 +154,7 @@ while True:
     getContours(imgDil, imgContour, count)
 
     # Display the images
-    imgStack = stackImages(0.5, ([img, imgCanny], [imgDil, imgContour]))
+    imgStack = stackImages(0.5, ([imgRB, imgCanny], [imgDil, imgContour]))
     cv2.imshow("Result", imgStack)
 
     # Increase the count
