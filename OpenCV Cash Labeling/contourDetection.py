@@ -41,8 +41,6 @@ def getContours(img,imgContour, count):
             if x + 128 < y+h  and y + 128 < x+w :
                 cv2.rectangle(imgContour, (x , y ), (x + w , y + h ), (0, 255, 0), 5)
 
-                
-
                 # Resize
                 border_v = 0
                 border_h = 0

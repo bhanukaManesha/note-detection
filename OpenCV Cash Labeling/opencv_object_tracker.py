@@ -71,12 +71,12 @@ while True:
 	# VideoStream or VideoCapture object
 	frame = vs.read()
 	frame = frame[1] if args.get("video", False) else frame
- 
+
 	# check to see if we have reached the end of the stream
 	if frame is None:
 		break
- 
-    
+
+	
 	# resize the frame (so we can process it faster) and grab the
 	# frame dimensions
 	# frame = imutils.resize(frame, width=500)
@@ -84,22 +84,22 @@ while True:
 
 	key = cv2.waitKey(1) & 0xFF
 
-    # if the 's' key is selected, we are going to "select" a bounding
-    # box to track
+	# if the 's' key is selected, we are going to "select" a bounding
+	# box to track
 	if key == ord("s") or initBB is None:
-        # select the bounding box of the object we want to track (make
-        # sure you press ENTER or SPACE after selecting the ROI)
+		# select the bounding box of the object we want to track (make
+		# sure you press ENTER or SPACE after selecting the ROI)
 		initBB = cv2.selectROI("Frame", frame, fromCenter=False,
-            showCrosshair=True)
-    
-        # start OpenCV object tracker using the supplied bounding box
-        # coordinates, then start the FPS throughput estimator as well
+			showCrosshair=True)
+	
+		# start OpenCV object tracker using the supplied bounding box
+		# coordinates, then start the FPS throughput estimator as well
 		tracker.init(frame, initBB)
 		fps = FPS().start()
 
 		print(initBB)
 
-    # check to see if we are currently tracking an object
+	# check to see if we are currently tracking an object
 	if initBB is not None:
 		# grab the new bounding box coordinates of the object
 		(success, box) = tracker.update(frame)
@@ -113,7 +113,7 @@ while True:
 			# print("W:" + str(w))
 			# print("H:" + str(h))
 			frame = frame[y:y+h,x:x+w,:]
-			 
+			
 
 			# cv2.rectangle(frame, (x, y), (x + w, y + h),
 			# 	(0, 255, 0), 2)
@@ -137,28 +137,28 @@ while True:
 		# 		cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
 
 
-    # show the output frame
+	# show the output frame
 	cv2.imshow("Frame", frame)
 
 	cv2.imwrite("extract/frame%d.jpg" % count, frame)  
 
 	count += 1
 
-    
-    
+	
+	
 
 
-    # if the `q` key was pressed, break from the loop
+	# if the `q` key was pressed, break from the loop
 	if key == ord("q"):
 		break
- 
+
 # if we are using a webcam, release the pointer
 if not args.get("video", False):
 	vs.stop()
- 
+
 # otherwise, release the file pointer
 else:
 	vs.release()
- 
+
 # close all windows
 cv2.destroyAllWindows()
