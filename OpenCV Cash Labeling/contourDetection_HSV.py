@@ -1,46 +1,34 @@
 import cv2
 import numpy as np
 from matplotlib import pyplot as plt
-
-frameWidth = 320
-frameHeight = 240
-
-# Script parameters
-
-testingMode = True
-collectData = False
-currency = 1
-side = "front"
-
-# cap = cv2.VideoCapture('dataset/videos/' + str(currency) + '_'+ side + '.mov')
-cap = cv2.VideoCapture('experiment/greenscreen_50.mov')
-
-cap.set(3, frameWidth)
-cap.set(4, frameHeight)
+import os
+import sys
+from uuid import uuid4
 
 def empty():
 	pass
 
-cv2.namedWindow("Parameters")
-cv2.resizeWindow("Parameters",640, 240)
-cv2.createTrackbar("Threshold1", "Parameters", 26, 244, empty)
-cv2.createTrackbar("Threshold2", "Parameters", 90, 255, empty)
-cv2.createTrackbar("AreaMin", "Parameters", 150000, 550000, empty)
-# cv2.createTrackbar("AreaMax", "Parameters", 500000, 550000, empty)
+def update_progress(progress, total):
+    print '\r[{0}] {1}%'.format('#'*(progress/10), progress)
 
-def getContours(img,imgContour, count):
+def getContours(img,preprocessedImg, areaMin):
+    '''
+    method to extract the contours
+    '''
+
     contours, hierarchy = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     
     for cnt in contours:
         area = cv2.contourArea(cnt)
-        areaMin = cv2.getTrackbarPos("AreaMin", "Parameters")
-        # areaMax = cv2.getTrackbarPos("AreaMax", "Parameters")
+
+        if isChoseParameters:
+            areaMin = cv2.getTrackbarPos("AreaMin", "Parameters")
 
         # if the area is more than the minimium
         if area > areaMin:
 
             # Draw the contours on the image
-            cv2.drawContours(imgContour, cnt, -1, (255, 0, 255), 7)
+            cv2.drawContours(preprocessedImg, cnt, -1, (255, 0, 255), 7)
 
             # Apporximate the contours
             peri = cv2.arcLength(cnt, True)
@@ -49,44 +37,23 @@ def getContours(img,imgContour, count):
             # Getting the bounding box
             x , y , w, h = cv2.boundingRect(approx)
 
-            # Extract only if the image size is more than 128
-            
-            cv2.rectangle(imgContour, (x , y ), (x + w , y + h ), (0, 255, 0), 5)
+            if verbose == 2 : 
+                # Draw a rectangle around the output
+                cv2.rectangle(preprocessedImg, (x , y ), (x + w , y + h ), (0, 255, 0), 5)
+                cv2.putText(preprocessedImg, "Points: " + str(len(approx)), (x + w + 20, y + 20), cv2.FONT_HERSHEY_COMPLEX, .7,
+                            (0, 255, 0), 2)
+                cv2.putText(preprocessedImg, "Area: " + str(int(area)), (x + w + 20, y + 45), cv2.FONT_HERSHEY_COMPLEX, 0.7,
+                            (0, 255, 0), 2)
 
-            # Resize
-            border_v = 0
-            border_h = 0
-            IMG_COL = 128
-            IMG_ROW = 128
-
-            # imgFinal[:,:,0] = imgCC[:,:,0] * green
-            # imgFinal[:,:,1] = imgCC[:,:,1] * green
-            # imgFinal[:,:,2] = imgCC[:,:,2] * green
-            imgFinal = imgCC * imgRGBGray
-            extractImg = imgFinal[y:y+h,x:x+w]
-
-            # if (IMG_COL/IMG_ROW) >= (extractImg.shape[0]/extractImg.shape[1]):
-            #     border_v = int((((IMG_COL/IMG_ROW)*extractImg.shape[1])-extractImg.shape[0])/2)
-            # else:
-            #     border_h = int((((IMG_ROW/IMG_COL)*extractImg.shape[0])-extractImg.shape[1])/2)
-            # extractImg = cv2.copyMakeBorder(extractImg, border_v, border_v, border_h, border_h, cv2.BORDER_CONSTANT, 0)
-            # finalImg = cv2.resize(extractImg, (1920, 1080))
-
-            if collectData :
-                cv2.imwrite("dataset/image/RM"+ str(currency)  + "/rm"+ str(currency) + "_"+ side + "_" +"%d.jpg" % count, finalImg)
-                print(str(count) + ": " +  str(w) + " " + str(h) + " " + str(y+h) + " " + str(x+w))
-
-            if testingMode :                
-                cv2.imwrite("testing/%d.jpg" % count, extractImg)
-
-            cv2.putText(imgContour, "Points: " + str(len(approx)), (x + w + 20, y + 20), cv2.FONT_HERSHEY_COMPLEX, .7,
-                        (0, 255, 0), 2)
-            cv2.putText(imgContour, "Area: " + str(int(area)), (x + w + 20, y + 45), cv2.FONT_HERSHEY_COMPLEX, 0.7,
-                        (0, 255, 0), 2)
+            return {"x" : x,
+                    "y" : y,
+                    "w" : w,
+                    "h" : h
+                    }
 
 def stackImages(scale,imgArray):
     '''
-    Method to stack all the images and easily display them
+    method to stack all the images and easily display them
     '''
     rows = len(imgArray)
     cols = len(imgArray[0])
@@ -118,80 +85,150 @@ def stackImages(scale,imgArray):
         ver = hor
     return ver
 
-# Initialize variables
-count = 0
+def intializeParameterWindow() : 
+    '''
+    method to create the parameter window
+    '''
+    cv2.namedWindow("Parameters")
+    cv2.resizeWindow("Parameters",640, 240)
+    cv2.createTrackbar("Threshold1", "Parameters", 26, 244, empty)
+    cv2.createTrackbar("Threshold2", "Parameters", 90, 255, empty)
+    cv2.createTrackbar("AreaMin", "Parameters", 150000, 550000, empty)
 
-while True:
+def processing():
+    '''
+    method for the processing
+    '''
+    cap = cv2.VideoCapture(videoPath)
+    total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    count = 0
 
-    # Read each frame
-    sucess, img = cap.read()
-    imgFinal = img.copy()
-    imgCC = img.copy()
+    while True:
+        
+        count += 1
 
+        # Print Progress
+        update_progress(count, total)
+
+        # Read each frame
+        sucess, img = cap.read()
+        
+        img_final = img.copy()
+
+        # Preprocessing for canny edge detector
+        preprocessedImg, mask = preprocessing_for_canny(img)
+
+        # Get the canny edge image
+        imgCanny = cv2.Canny(preprocessedImg, threshold1, threshold2)
+
+        # Dialate the image to expand the enhance the edges
+        kernal = np.ones((7,7))
+        imgDil = cv2.dilate(imgCanny, kernal, iterations=1)
+
+        # Get the contours
+        boundingBox = getContours(imgDil, preprocessedImg, areaMin)
+
+        if collectData:
+
+            img_final[:,:,0] = img_final[:,:,0] * mask
+            img_final[:,:,1] = img_final[:,:,1] * mask
+            img_final[:,:,2] = img_final[:,:,2] * mask
+            
+            # Write the images to file
+            extract_write_image(
+                boundingBox["x"],
+                boundingBox["y"],
+                boundingBox["w"],
+                boundingBox["h"],
+                img_final
+            )
+
+        if verbose == 2:
+            # Display the images
+            imgStack = stackImages(0.5, ([img, imgCanny], [imgDil, preprocessedImg]))
+            cv2.imshow("Result", imgStack)
+
+        # Exit from the window
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+def preprocessing_for_canny(img) :
     # Convert BGR to HSV
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
-    ## mask of green (36,25,25) ~ (86, 255,255)
-    # mask = cv2.inRange(hsv, (36, 25, 25), (86, 255,255))
-    mask = cv2.inRange(hsv, (36, 25, 25), (70, 255,255))
+    if isGreen : 
+        # mask for green
+        mask = cv2.inRange(hsv, (36, 25, 25), (70, 255,255))
+    else :
+        # mask for blue
+        mask = cv2.inRange(hsv, (36, 25, 25), (70, 255,255))
 
-    ## slice the green
+    ## slice the mask
     imask = mask == 0
-    green = np.zeros_like(img, np.uint8)
-    green[imask] = img[imask]
+    mask_channel = np.zeros_like(img, np.uint8)
+    mask_channel[imask] = img[imask]
 
-    img = cv2.cvtColor(green, cv2.COLOR_HSV2BGR)
-
-    imgRGBGray = green != 0
-
-
-    
-
-    
-
-    # finalImg[:, :, 0] = finalImg[:,:,0] * alpha
-    # finalImg[:, :, 1] = finalImg[:,:,1] * alpha
-    # finalImg[:, :, 2] = finalImg[:,:,2] * alpha
-
-    # finalImg = cv2.resize(finalImg, (IMG_ROW, IMG_COL))
-
-    # #  Display the images
-    # imgStack = stackImages(0.5, ([img, green], [bgrimg, bgrimg]))
-    # cv2.imshow("Result", imgStack)
+    # converting the image from HSV to RGB
+    imgSubGreen = cv2.cvtColor(mask_channel, cv2.COLOR_HSV2BGR)
 
     # Take copy of the frame
-    imgContour = img.copy()
+    preprocessedImg = imgSubGreen.copy()
 
     # Add gaussian blur
-    imgBlur = cv2.GaussianBlur(imgContour, (9,9), 1)
+    imgBlur = cv2.GaussianBlur(preprocessedImg, (9,9), 1)
 
     # Convert the image to gray
     imgGray = cv2.cvtColor(imgBlur, cv2.COLOR_BGR2GRAY)
 
-    # Get the values from the tracker bar
-    threshold1 = cv2.getTrackbarPos("Threshold1", "Parameters")
-    threshold2 = cv2.getTrackbarPos("Threshold2", "Parameters")
+    if isChoseParameters:
+        # Get the values from the tracker bar
+        threshold1 = cv2.getTrackbarPos("Threshold1", "Parameters")
+        threshold2 = cv2.getTrackbarPos("Threshold2", "Parameters")
 
-    # Get the canny edge image
-    imgCanny = cv2.Canny(imgGray, threshold1, threshold2)
+    return preprocessedImg, imask
 
-    # Create a kernal of ones
-    kernal = np.ones((7,7))
+def extract_write_image(x,y,w,h, imgFinal) : 
 
-    # Dialate the image to expand the enhance the edges
-    imgDil = cv2.dilate(imgCanny, kernal, iterations=1)
+    extractImg = imgFinal[y:y+h,x:x+w]
 
-    # Get the contours
-    getContours(imgDil, imgContour, count)
+    if collectData :
+        if not os.path.exists(outputPath):
+            os.makedirs(outputPath)
 
-    # Display the images
-    imgStack = stackImages(0.5, ([img, imgCanny], [imgDil, imgContour]))
-    cv2.imshow("Result", imgStack)
+        imageName = uuid4()
+        cv2.imwrite(outputPath + "%d.jpg" % imageName, extractImg)
+        
+        if verbose == 1:
+            print(str(imageName) + ": " +  str(w) + " " + str(h) + " " + str(y+h) + " " + str(x+w))
 
-    # Increase the count
-    count += 1
+def main():
+    if isChoseParameters:
+        intializeParameterWindow()
+    processing()
 
-    # Exit from the window
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
+if __name__ == "__main__" :
+    if len(sys.argv) != 5:
+       print("Please input the args as <video_path> <output_path> <collectData> <verbose>")
+       exit()
+    else:
+        # Script parameters
+        threshold1 = 26
+        threshold2 = 90
+        areaMin = 150000
 
+        collectData = bool(sys.argv[3])
+        verbose = int(sys.argv[4])
+
+        videoPath = sys.argv[1]
+        outputPath = sys.argv[2]
+
+        isGreen = True
+
+        isChoseParameters = False
+        if verbose == 2:
+            isChoseParameters = True
+            
+
+
+
+        main()
