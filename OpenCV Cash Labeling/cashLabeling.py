@@ -8,8 +8,15 @@ from uuid import uuid4
 def empty():
 	pass
 
-def update_progress(progress, total):
-    print '\r[{0}] {1}%'.format('#'*(progress/10), progress)
+def progress(count, total, suffix=''):
+    bar_len = 60
+    filled_len = int(round(bar_len * count / float(total)))
+
+    percents = round(100.0 * count / float(total), 1)
+    bar = '=' * filled_len + '-' * (bar_len - filled_len)
+
+    sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', suffix))
+    sys.stdout.flush() 
 
 def getContours(img,preprocessedImg, areaMin):
     '''
@@ -108,7 +115,7 @@ def processing():
         count += 1
 
         # Print Progress
-        update_progress(count, total)
+        progress(count, total)
 
         # Read each frame
         sucess, img = cap.read()
