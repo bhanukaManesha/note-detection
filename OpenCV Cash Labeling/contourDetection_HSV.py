@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+from matplotlib import pyplot as plt
 
 frameWidth = 320
 frameHeight = 240
@@ -12,7 +13,7 @@ currency = 1
 side = "front"
 
 # cap = cv2.VideoCapture('dataset/videos/' + str(currency) + '_'+ side + '.mov')
-cap = cv2.VideoCapture('experiment/sample6.mov')
+cap = cv2.VideoCapture('experiment/greenscreen_50.mov')
 
 cap.set(3, frameWidth)
 cap.set(4, frameHeight)
@@ -25,7 +26,7 @@ cv2.resizeWindow("Parameters",640, 240)
 cv2.createTrackbar("Threshold1", "Parameters", 26, 244, empty)
 cv2.createTrackbar("Threshold2", "Parameters", 90, 255, empty)
 cv2.createTrackbar("AreaMin", "Parameters", 150000, 550000, empty)
-cv2.createTrackbar("AreaMax", "Parameters", 500000, 550000, empty)
+# cv2.createTrackbar("AreaMax", "Parameters", 500000, 550000, empty)
 
 def getContours(img,imgContour, count):
     contours, hierarchy = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
@@ -33,10 +34,10 @@ def getContours(img,imgContour, count):
     for cnt in contours:
         area = cv2.contourArea(cnt)
         areaMin = cv2.getTrackbarPos("AreaMin", "Parameters")
-        areaMax = cv2.getTrackbarPos("AreaMax", "Parameters")
+        # areaMax = cv2.getTrackbarPos("AreaMax", "Parameters")
 
         # if the area is more than the minimium
-        if area > areaMin and area < areaMax:
+        if area > areaMin:
 
             # Draw the contours on the image
             cv2.drawContours(imgContour, cnt, -1, (255, 0, 255), 7)
@@ -58,21 +59,25 @@ def getContours(img,imgContour, count):
             IMG_COL = 128
             IMG_ROW = 128
 
+            # imgFinal[:,:,0] = imgCC[:,:,0] * green
+            # imgFinal[:,:,1] = imgCC[:,:,1] * green
+            # imgFinal[:,:,2] = imgCC[:,:,2] * green
+            imgFinal = imgCC * imgRGBGray
             extractImg = imgFinal[y:y+h,x:x+w]
 
-            if (IMG_COL/IMG_ROW) >= (extractImg.shape[0]/extractImg.shape[1]):
-                border_v = int((((IMG_COL/IMG_ROW)*extractImg.shape[1])-extractImg.shape[0])/2)
-            else:
-                border_h = int((((IMG_ROW/IMG_COL)*extractImg.shape[0])-extractImg.shape[1])/2)
-            extractImg = cv2.copyMakeBorder(extractImg, border_v, border_v, border_h, border_h, cv2.BORDER_CONSTANT, 0)
-            finalImg = cv2.resize(extractImg, (IMG_ROW, IMG_COL))
+            # if (IMG_COL/IMG_ROW) >= (extractImg.shape[0]/extractImg.shape[1]):
+            #     border_v = int((((IMG_COL/IMG_ROW)*extractImg.shape[1])-extractImg.shape[0])/2)
+            # else:
+            #     border_h = int((((IMG_ROW/IMG_COL)*extractImg.shape[0])-extractImg.shape[1])/2)
+            # extractImg = cv2.copyMakeBorder(extractImg, border_v, border_v, border_h, border_h, cv2.BORDER_CONSTANT, 0)
+            # finalImg = cv2.resize(extractImg, (1920, 1080))
 
             if collectData :
                 cv2.imwrite("dataset/image/RM"+ str(currency)  + "/rm"+ str(currency) + "_"+ side + "_" +"%d.jpg" % count, finalImg)
                 print(str(count) + ": " +  str(w) + " " + str(h) + " " + str(y+h) + " " + str(x+w))
 
-            if testingMode :
-                cv2.imwrite("testing/%d.jpg" % count, finalImg)
+            if testingMode :                
+                cv2.imwrite("testing/%d.jpg" % count, extractImg)
 
             cv2.putText(imgContour, "Points: " + str(len(approx)), (x + w + 20, y + 20), cv2.FONT_HERSHEY_COMPLEX, .7,
                         (0, 255, 0), 2)
@@ -80,6 +85,9 @@ def getContours(img,imgContour, count):
                         (0, 255, 0), 2)
 
 def stackImages(scale,imgArray):
+    '''
+    Method to stack all the images and easily display them
+    '''
     rows = len(imgArray)
     cols = len(imgArray[0])
     rowsAvailable = isinstance(imgArray[0], list)
@@ -118,6 +126,7 @@ while True:
     # Read each frame
     sucess, img = cap.read()
     imgFinal = img.copy()
+    imgCC = img.copy()
 
     # Convert BGR to HSV
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
@@ -132,6 +141,19 @@ while True:
     green[imask] = img[imask]
 
     img = cv2.cvtColor(green, cv2.COLOR_HSV2BGR)
+
+    imgRGBGray = green != 0
+
+
+    
+
+    
+
+    # finalImg[:, :, 0] = finalImg[:,:,0] * alpha
+    # finalImg[:, :, 1] = finalImg[:,:,1] * alpha
+    # finalImg[:, :, 2] = finalImg[:,:,2] * alpha
+
+    # finalImg = cv2.resize(finalImg, (IMG_ROW, IMG_COL))
 
     # #  Display the images
     # imgStack = stackImages(0.5, ([img, green], [bgrimg, bgrimg]))
