@@ -8,8 +8,7 @@ python cashLabeling.py "dataset/videos/greenscreen_50.MOV" "dataset/image/RM50/"
 
 #### The arguments for the script
 ```
-python cashLabeling.py <video_path> <oytput_path> <collect_data> <verbose>
-
+python cashLabeling.py <video_path> <output_path> <collect_data> <verbose>
 ```
 - video_path : the path to the video file
 - output_path : the path the output file
