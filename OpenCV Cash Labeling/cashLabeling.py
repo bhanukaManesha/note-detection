@@ -114,11 +114,15 @@ def processing():
         
         count += 1
 
-        # Print Progress
-        progress(count, total)
+        if verbose == 0:
+            # Print Progress
+            progress(count, total)
 
         # Read each frame
         sucess, img = cap.read()
+        
+        if not sucess:
+            break
         
         img_final = img.copy()
 
