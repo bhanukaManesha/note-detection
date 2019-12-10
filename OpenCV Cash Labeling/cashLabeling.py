@@ -180,10 +180,10 @@ def preprocessing_for_canny(img) :
     mask_channel[imask] = img[imask]
 
     # converting the image from HSV to RGB
-    imgSubGreen = cv2.cvtColor(mask_channel, cv2.COLOR_HSV2BGR)
+    img_sub_green = cv2.cvtColor(mask_channel, cv2.COLOR_HSV2BGR)
 
     # Take copy of the frame
-    preprocessedImg = imgSubGreen.copy()
+    preprocessedImg = img_sub_green.copy()
 
     # Add gaussian blur
     imgBlur = cv2.GaussianBlur(preprocessedImg, (9,9), 1)
