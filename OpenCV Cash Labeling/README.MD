@@ -24,7 +24,8 @@ python cashLabeling.py <video_path> <output_path> <collect_data> <verbose>
 Run the following command in the terminal
 
 ```
-python renamingScript.py "dataset/image/rm50/" ".jpg" 0  
+rm dataset/image/RM50/.DS_Store 
+python renamingScript.py "dataset/image/rm50/" ".png" 0  
 ```
 
 #### The arguments for the script

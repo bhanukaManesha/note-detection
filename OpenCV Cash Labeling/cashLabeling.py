@@ -22,7 +22,6 @@ def getContours(img,preprocessedImg, areaMin):
     '''
     method to extract the contours
     '''
-
     contours, hierarchy = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     
     for cnt in contours:
@@ -144,14 +143,21 @@ def processing():
             img_final[:,:,0] = img_final[:,:,0] * mask
             img_final[:,:,1] = img_final[:,:,1] * mask
             img_final[:,:,2] = img_final[:,:,2] * mask
+
             
+            b_channel, g_channel, r_channel = cv2.split(img_final)
+
+            alpha_channel = (mask*255).astype(np.uint8)
+
+            img_BGRA = cv2.merge((b_channel, g_channel, r_channel, alpha_channel))
+
             # Write the images to file
             extract_write_image(
                 boundingBox["x"],
                 boundingBox["y"],
                 boundingBox["w"],
                 boundingBox["h"],
-                img_final
+                img_BGRA
             )
 
         if verbose == 2:
@@ -207,7 +213,7 @@ def extract_write_image(x,y,w,h, imgFinal) :
             os.makedirs(outputPath)
 
         imageName = uuid4()
-        cv2.imwrite(outputPath + "%d.jpg" % imageName, extractImg)
+        cv2.imwrite(outputPath + '%d.png' % imageName, extractImg)
         
         if verbose == 1:
             print(str(imageName) + ": " +  str(w) + " " + str(h) + " " + str(y+h) + " " + str(x+w))
@@ -239,7 +245,4 @@ if __name__ == "__main__" :
         if verbose == 2:
             isChoseParameters = True
             
-
-
-
         main()

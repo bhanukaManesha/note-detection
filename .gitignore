@@ -10,3 +10,8 @@ OpenCV Cash Labeling/.vscode/
 Archived\ Scripts/
 .pylintrc
 Documents/
+opencvenv/
+Generate Random Images/RM50/
+Generate Random Images/background/
+Generate Random Images/final_data/
+.mypy_cache/
