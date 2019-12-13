@@ -5,6 +5,8 @@ import random
 import math
 import imutils
 from uuid import uuid4
+import json
+
 
 def image_resize(image, width = None, height = None, inter = cv2.INTER_AREA):
     # initialize the dimensions of the image to be resized and
@@ -50,7 +52,11 @@ def main() :
 
     print("Starting background image...")
 
+    bounding_boxes = {}
+
     for back_img in background_images:
+
+       
 
         resized_images = []
 
@@ -61,6 +67,9 @@ def main() :
 
         total_sub_images = rows * columns
 
+        imageName = uuid4()
+        bounding_box_for_image = []
+
         for i in range(0, total_sub_images):
 
             print("Starting sub image :" + str(i) )
@@ -69,6 +78,8 @@ def main() :
             column_index = i % rows
 
             resized_img = image_resize(img, width=width_per_image)
+
+            resize_height, resize_width, resize_channnel = resized_img.shape
             # resized_img = cv2.resize(img, (width_per_image,height_per_image), interpolation = cv2.INTER_CUBIC)
             
             # Overlay the images to the background image
@@ -78,11 +89,23 @@ def main() :
                 (row_index * height_per_image)
                 )
 
+            box = { 'x': str(column_index * width_per_image),
+                    'y': str(row_index * height_per_image),
+                    'height': str(resize_height),
+                    'width':str(resize_width)}
+
+            bounding_box_for_image.append(box)
+
         cv2.imshow('image',back_img)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
+        
+        cv2.imwrite(output_folder + "/" + output_currency + "/" + '%d.jpg' % imageName, back_img)
 
-        write_to_file(back_img, output_path)
+        bounding_boxes[str(imageName)] = bounding_box_for_image
+
+    with open(output_folder + '/bounding_boxes.json', 'w') as f:
+        json.dump(bounding_boxes, f)
 
 
 def read_subimages(path_to_folder):
@@ -136,23 +159,17 @@ def overlay_transparent(background, overlay, x, y):
 
     return background
 
-
-def write_to_file(image, path):
-
-    imageName = uuid4()
-    cv2.imwrite(path + '%d.jpg' % imageName, image)
-    
-
 if __name__ == "__main__" :
 
 
     # Define the parameters here
-    rows = 16
-    columns = 16
+    rows = 2
+    columns = 2
 
     background_images_path = "background/"
     sub_images_path = "RM50/"
-    output_path = "final_data/RM50/"
+    output_folder = "final_data"
+    output_currency = "RM50"
 
     main()
 
