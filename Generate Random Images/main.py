@@ -62,8 +62,8 @@ def main() :
 
         # Calculating the height and width
         height, width, channels = back_img.shape
-        height_per_image = math.floor(height / rows)
-        width_per_image = math.floor(width / columns)
+        height_per_image = int(math.floor(height / rows))
+        width_per_image = int(math.floor(width / columns))
 
         total_sub_images = rows * columns
 
@@ -77,6 +77,7 @@ def main() :
             row_index = i // rows
             column_index = i % rows
 
+            
             resized_img = image_resize(img, width=width_per_image)
 
             resize_height, resize_width, resize_channnel = resized_img.shape
@@ -89,24 +90,53 @@ def main() :
                 (row_index * height_per_image)
                 )
 
-            box = { 'x': str(column_index * width_per_image),
-                    'y': str(row_index * height_per_image),
+            box = { 'x': str(((column_index * width_per_image) + ((column_index + 1) * width_per_image))/2),
+                    'y': str(((row_index * height_per_image) + ((row_index + 1) * height_per_image))/2),
                     'height': str(resize_height),
-                    'width':str(resize_width)}
+                    'width':str(resize_width),
+                    'max_width' : str(width),
+                    'max_height' : str(height)
+                }
 
+            
             bounding_box_for_image.append(box)
 
-        cv2.imshow('image',back_img)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+        # cv2.imshow('image',back_img)
+        # cv2.waitKey(0)
+        # cv2.destroyAllWindows()
         
-        cv2.imwrite(output_folder + "/" + output_currency + "/" + '%d.jpg' % imageName, back_img)
+        cv2.imwrite(output_folder + "/images/" +  str(imageName) + '.jpg', back_img)
 
         bounding_boxes[str(imageName)] = bounding_box_for_image
 
-    with open(output_folder + '/bounding_boxes.json', 'w') as f:
-        json.dump(bounding_boxes, f)
+        if not save_as_json:
+            with open(output_folder + mode + ".txt", "a") as txtfile:
+                txtfile.write(output_folder + "images/" + str(imageName) + ".jpg\n")
 
+            with open(output_folder + "labels/" + str(imageName) + ".txt", "a") as txtfile:
+                for box in bounding_box_for_image:
+                    
+                    max_height = float(box['max_height'])
+                    max_width = float(box['max_width'])
+
+                    x = float(box['x'])
+                    y = float(box['y'])
+
+                    height = float(box['height'])
+                    width = float(box['width'])
+
+                    scaled_x = x/max_width
+                    scaled_y = y/max_height
+
+                    scaled_height = height/max_height
+                    scaled_width = width/max_width
+
+                    write_str = class_label[output_currency] + " " + str(scaled_x) + " " + str(scaled_y) + " " + str(scaled_height) + " " + str(scaled_width) + "\n"
+                    txtfile.write(write_str)
+
+    if save_as_json:
+        with open(output_folder + 'bounding_boxes.json', 'w') as f:
+            json.dump(bounding_boxes, f)
 
 def read_subimages(path_to_folder):
     images = []
@@ -161,15 +191,23 @@ def overlay_transparent(background, overlay, x, y):
 
 if __name__ == "__main__" :
 
+    class_label = {
+        "RM50" : "0",
+        "RM100" : "1"
+    }
 
     # Define the parameters here
-    rows = 2
-    columns = 2
+    rows = 4
+    columns = 4
 
     background_images_path = "background/"
     sub_images_path = "RM50/"
-    output_folder = "final_data"
+    # output_folder = "data/custom/"
+    output_folder = "test/"
     output_currency = "RM50"
+
+    save_as_json = False
+    mode = "train" # train or test
 
     main()
 
