@@ -41,6 +41,7 @@ def image_resize(image, width = None, height = None, inter = cv2.INTER_AREA):
 
 
 def main() :
+    
 
     print("Reading all images...")
 
@@ -55,8 +56,9 @@ def main() :
     bounding_boxes = {}
 
     for back_img in background_images:
+        back_img = image_resize(back_img, width=416, height=416, inter = cv2.INTER_NEAREST)
 
-       
+        no_of_images = 6
 
         resized_images = []
 
@@ -71,6 +73,15 @@ def main() :
         bounding_box_for_image = []
 
         for i in range(0, total_sub_images):
+            timer = int((rows * random.random()))
+            if no_of_images == 0 and generate_mode == "random":
+                continue
+
+            if generate_mode == "random" and timer > 0: 
+                timer -= 1
+                continue
+
+            no_of_images -= 1
 
             print("Starting sub image :" + str(i) )
             img = random.choice(sub_images)
@@ -101,9 +112,9 @@ def main() :
             
             bounding_box_for_image.append(box)
 
-        # cv2.imshow('image',back_img)
-        # cv2.waitKey(0)
-        # cv2.destroyAllWindows()
+        cv2.imshow('image',back_img)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
         
         cv2.imwrite(output_folder + "/images/" +  str(imageName) + '.jpg', back_img)
 
@@ -197,17 +208,24 @@ if __name__ == "__main__" :
     }
 
     # Define the parameters here
-    rows = 4
-    columns = 4
+    rows = 16
+    columns = 16
+
+    mode = "train" # train or test
+    
+    generate_mode = "random" # grid or random
 
     background_images_path = "background/"
     sub_images_path = "RM50/"
-    # output_folder = "data/custom/"
-    output_folder = "test/"
+    
+    output_folder = "data/custom/"
+    # output_folder = "test/"
+
     output_currency = "RM50"
 
     save_as_json = False
-    mode = "train" # train or test
+    
+
 
     main()
 
