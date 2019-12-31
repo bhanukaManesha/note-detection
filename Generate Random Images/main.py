@@ -40,7 +40,11 @@ def image_resize(image, width = None, height = None, inter = cv2.INTER_AREA):
     return resized
 
 
-def main() :
+def main(
+    rows = 2,
+    columns = 2,
+
+) :
     
 
     print("Reading all images...")
@@ -56,9 +60,8 @@ def main() :
     bounding_boxes = {}
 
     for back_img in background_images:
-        back_img = image_resize(back_img, width=416, height=416, inter = cv2.INTER_NEAREST)
 
-        no_of_images = 6
+        no_of_images = 10
 
         resized_images = []
 
@@ -109,12 +112,11 @@ def main() :
                     'max_height' : str(height)
                 }
 
-            
             bounding_box_for_image.append(box)
 
-        cv2.imshow('image',back_img)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+        # cv2.imshow('image',back_img)
+        # cv2.waitKey(0)
+        # cv2.destroyAllWindows()
         
         cv2.imwrite(output_folder + "/images/" +  str(imageName) + '.jpg', back_img)
 
@@ -142,7 +144,7 @@ def main() :
                     scaled_height = height/max_height
                     scaled_width = width/max_width
 
-                    write_str = class_label[output_currency] + " " + str(scaled_x) + " " + str(scaled_y) + " " + str(scaled_height) + " " + str(scaled_width) + "\n"
+                    write_str = class_label[output_currency] + " " + str(scaled_x) + " " + str(scaled_y) + " " + str(scaled_width) + " " + str(scaled_height) + "\n"
                     txtfile.write(write_str)
 
     if save_as_json:
@@ -208,24 +210,26 @@ if __name__ == "__main__" :
     }
 
     # Define the parameters here
-    rows = 16
-    columns = 16
-
-    mode = "train" # train or test
-    
-    generate_mode = "random" # grid or random
+    r = 2
+    c = 2
+    mode = "test" # train or test
+    generate_mode = "grid" # grid or random
 
     background_images_path = "background/"
     sub_images_path = "RM50/"
     
-    output_folder = "data/custom/"
-    # output_folder = "test/"
+#    output_folder = "data/train/"
+    output_folder = "data/test/"
 
     output_currency = "RM50"
 
     save_as_json = False
     
-
-
-    main()
+    for i in range(5):
+        print(str(i))
+        main(rows=8, columns=8)
+        
+#    n = 20
+#    for i in range(n,0,-1):
+#        main(rows=i, columns=i)
 
