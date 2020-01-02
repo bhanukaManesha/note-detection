@@ -40,12 +40,12 @@ def image_resize(image, width = None, height = None, inter = cv2.INTER_AREA):
     return resized
 
 
-def main(
-    rows = 2,
-    columns = 2,
-
-) :
-    
+def main(rows = 2,columns = 2) :
+    '''
+    main function to generete the images
+    @rows - number of rows for the image
+    @col - number of columns for the image
+    '''
 
     print("Reading all images...")
 
@@ -59,6 +59,7 @@ def main(
 
     bounding_boxes = {}
 
+    
     for back_img in background_images:
 
         no_of_images = 10
@@ -73,14 +74,27 @@ def main(
         total_sub_images = rows * columns
 
         imageName = uuid4()
-        bounding_box_for_image = []
+
+        default_box = {
+                'confidence' : 0,
+                'x': 0,
+                'y': 0,
+                'height': 0,
+                'width': 0,
+                'max_width' : 0,
+                'max_height' : 0
+            }
+
+        bounding_box_for_image = [default_box for i in range(total_sub_images)]
+
 
         for i in range(0, total_sub_images):
+
             timer = int((rows * random.random()))
             if no_of_images == 0 and generate_mode == "random":
                 continue
 
-            if generate_mode == "random" and timer > 0: 
+            if generate_mode == "random" and timer > 0:
                 timer -= 1
                 continue
 
@@ -91,20 +105,21 @@ def main(
             row_index = i // rows
             column_index = i % rows
 
-            
             resized_img = image_resize(img, width=width_per_image)
 
             resize_height, resize_width, resize_channnel = resized_img.shape
             # resized_img = cv2.resize(img, (width_per_image,height_per_image), interpolation = cv2.INTER_CUBIC)
-            
+
             # Overlay the images to the background image
             back_img = overlay_transparent(back_img,
-                resized_img, 
+                resized_img,
                 (column_index * width_per_image),
                 (row_index * height_per_image)
                 )
 
-            box = { 'x': str(((column_index * width_per_image) + ((column_index + 1) * width_per_image))/2),
+            box = {
+                    'confidence': 1,
+                    'x': str(((column_index * width_per_image) + ((column_index + 1) * width_per_image))/2),
                     'y': str(((row_index * height_per_image) + ((row_index + 1) * height_per_image))/2),
                     'height': str(resize_height),
                     'width':str(resize_width),
@@ -112,12 +127,8 @@ def main(
                     'max_height' : str(height)
                 }
 
-            bounding_box_for_image.append(box)
+            bounding_box_for_image[i] = box
 
-        # cv2.imshow('image',back_img)
-        # cv2.waitKey(0)
-        # cv2.destroyAllWindows()
-        
         cv2.imwrite(output_folder + "/images/" +  str(imageName) + '.jpg', back_img)
 
         bounding_boxes[str(imageName)] = bounding_box_for_image
@@ -128,23 +139,30 @@ def main(
 
             with open(output_folder + "labels/" + str(imageName) + ".txt", "a") as txtfile:
                 for box in bounding_box_for_image:
-                    
-                    max_height = float(box['max_height'])
-                    max_width = float(box['max_width'])
 
-                    x = float(box['x'])
-                    y = float(box['y'])
+                    confidence = float(box['confidence'])
 
-                    height = float(box['height'])
-                    width = float(box['width'])
+                    if  confidence == 1.0:
+                        max_height = float(box['max_height'])
+                        max_width = float(box['max_width'])
 
-                    scaled_x = x/max_width
-                    scaled_y = y/max_height
+                        x = float(box['x'])
+                        y = float(box['y'])
 
-                    scaled_height = height/max_height
-                    scaled_width = width/max_width
+                        height = float(box['height'])
+                        width = float(box['width'])
 
-                    write_str = class_label[output_currency] + " " + str(scaled_x) + " " + str(scaled_y) + " " + str(scaled_width) + " " + str(scaled_height) + "\n"
+                        scaled_x = x/max_width
+                        scaled_y = y/max_height
+
+                        scaled_height = height/max_height
+                        scaled_width = width/max_width
+
+                        write_str = str(confidence) + " " + class_label[output_currency] + " " + str(scaled_x) + " " + str(scaled_y) + " " + str(scaled_width) + " " + str(scaled_height) + "\n"
+
+                    else:
+                        write_str = str(confidence) + " 0 0 0 0 0\n"
+
                     txtfile.write(write_str)
 
     if save_as_json:
@@ -213,23 +231,22 @@ if __name__ == "__main__" :
     r = 2
     c = 2
     mode = "test" # train or test
-    generate_mode = "grid" # grid or random
+    generate_mode = "random" # grid or random
 
     background_images_path = "background/"
     sub_images_path = "RM50/"
-    
-#    output_folder = "data/train/"
+
+   # output_folder = "data/train/"
     output_folder = "data/test/"
 
     output_currency = "RM50"
 
     save_as_json = False
-    
+
     for i in range(5):
         print(str(i))
         main(rows=8, columns=8)
-        
+
 #    n = 20
 #    for i in range(n,0,-1):
 #        main(rows=i, columns=i)
-
