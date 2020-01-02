@@ -59,7 +59,7 @@ def main(rows = 2,columns = 2) :
 
     bounding_boxes = {}
 
-    
+
     for back_img in background_images:
 
         no_of_images = 10
@@ -236,14 +236,14 @@ if __name__ == "__main__" :
     background_images_path = "background/"
     sub_images_path = "RM50/"
 
-   # output_folder = "data/train/"
+    # output_folder = "data/train/"
     output_folder = "data/test/"
 
     output_currency = "RM50"
 
     save_as_json = False
 
-    for i in range(5):
+    for i in range(20):
         print(str(i))
         main(rows=8, columns=8)
 
