@@ -16,14 +16,14 @@ def progress(count, total, suffix=''):
     bar = '=' * filled_len + '-' * (bar_len - filled_len)
 
     sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', suffix))
-    sys.stdout.flush() 
+    sys.stdout.flush()
 
 def getContours(img,preprocessedImg, areaMin):
     '''
     method to extract the contours
     '''
     contours, hierarchy = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-    
+
     for cnt in contours:
         area = cv2.contourArea(cnt)
 
@@ -43,7 +43,7 @@ def getContours(img,preprocessedImg, areaMin):
             # Getting the bounding box
             x , y , w, h = cv2.boundingRect(approx)
 
-            if verbose == 2 : 
+            if verbose == 2 :
                 # Draw a rectangle around the output
                 cv2.rectangle(preprocessedImg, (x , y ), (x + w , y + h ), (0, 255, 0), 5)
                 cv2.putText(preprocessedImg, "Points: " + str(len(approx)), (x + w + 20, y + 20), cv2.FONT_HERSHEY_COMPLEX, .7,
@@ -91,7 +91,7 @@ def stackImages(scale,imgArray):
         ver = hor
     return ver
 
-def intializeParameterWindow() : 
+def intializeParameterWindow() :
     '''
     method to create the parameter window
     '''
@@ -110,7 +110,7 @@ def processing():
     count = 0
 
     while True:
-        
+
         count += 1
 
         if verbose == 0:
@@ -119,10 +119,10 @@ def processing():
 
         # Read each frame
         sucess, img = cap.read()
-        
+
         if not sucess:
             break
-        
+
         img_final = img.copy()
 
         # Preprocessing for canny edge detector
@@ -144,7 +144,7 @@ def processing():
             img_final[:,:,1] = img_final[:,:,1] * mask
             img_final[:,:,2] = img_final[:,:,2] * mask
 
-            
+
             b_channel, g_channel, r_channel = cv2.split(img_final)
 
             alpha_channel = (mask*255).astype(np.uint8)
@@ -173,9 +173,9 @@ def preprocessing_for_canny(img) :
     # Convert BGR to HSV
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
-    if isGreen : 
+    if isGreen :
         # mask for green
-        mask = cv2.inRange(hsv, (36, 25, 25), (70, 255,255))
+        mask = cv2.inRange(hsv, (36, 25, 25), (85, 255,255))
     else :
         # mask for blue
         mask = cv2.inRange(hsv, (36, 25, 25), (70, 255,255))
@@ -204,7 +204,7 @@ def preprocessing_for_canny(img) :
 
     return preprocessedImg, imask
 
-def extract_write_image(x,y,w,h, imgFinal) : 
+def extract_write_image(x,y,w,h, imgFinal) :
 
     extractImg = imgFinal[y:y+h,x:x+w]
 
@@ -214,7 +214,7 @@ def extract_write_image(x,y,w,h, imgFinal) :
 
         imageName = uuid4()
         cv2.imwrite(outputPath + '%d.png' % imageName, extractImg)
-        
+
         if verbose == 1:
             print(str(imageName) + ": " +  str(w) + " " + str(h) + " " + str(y+h) + " " + str(x+w))
 
@@ -244,5 +244,5 @@ if __name__ == "__main__" :
         isChoseParameters = False
         if verbose == 2:
             isChoseParameters = True
-            
+
         main()
