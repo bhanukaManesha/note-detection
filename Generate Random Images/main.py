@@ -6,7 +6,10 @@ import math
 import imutils
 from uuid import uuid4
 import json
+import sys
 
+GRID_X = 8
+GRID_Y = 8
 
 def image_resize(image, width = None, height = None, inter = cv2.INTER_AREA):
     # initialize the dimensions of the image to be resized and
@@ -40,14 +43,14 @@ def image_resize(image, width = None, height = None, inter = cv2.INTER_AREA):
     return resized
 
 
-def main(rows = 2,columns = 2) :
+def main() :
     '''
     main function to generete the images
     @rows - number of rows for the image
     @col - number of columns for the image
     '''
 
-    print("Reading all images...")
+    print("Reading " + str(output_currency) + " notes and background images")
 
     # Reading the images
     background_images = read_subimages(background_images_path)
@@ -55,126 +58,160 @@ def main(rows = 2,columns = 2) :
 
     print("Read all images")
 
-    print("Starting background image...")
-
-    bounding_boxes = {}
+    total = sum(np.dot(groups,range(size,0,-1)))
 
 
-    for back_img in background_images:
+    for j in range(groups):
 
-        no_of_images = 10
+        for i in range(size,0,-1):
 
-        resized_images = []
+            progress(count, total)
 
-        # Calculating the height and width
-        height, width, channels = back_img.shape
-        height_per_image = int(math.floor(height / rows))
-        width_per_image = int(math.floor(width / columns))
+            rows = i
+            columns = i
 
-        total_sub_images = rows * columns
+            bounding_boxes = {}
 
-        imageName = uuid4()
-
-        default_box = {
-                'confidence' : 0,
-                'x': 0,
-                'y': 0,
-                'height': 0,
-                'width': 0,
-                'max_width' : 0,
-                'max_height' : 0
-            }
-
-        bounding_box_for_image = [default_box for i in range(total_sub_images)]
+            count += 1
 
 
-        for i in range(0, total_sub_images):
+            for back_img in background_images:
 
-            timer = int((rows * random.random()))
-            if no_of_images == 0 and generate_mode == "random":
-                continue
+                no_of_images = 8
 
-            if generate_mode == "random" and timer > 0:
-                timer -= 1
-                continue
+                resized_images = []
 
-            no_of_images -= 1
+                # Calculating the height and width
+                height, width, channels = back_img.shape
 
-            print("Starting sub image :" + str(i) )
-            img = random.choice(sub_images)
-            row_index = i // rows
-            column_index = i % rows
+                height_per_image = int(math.floor(height / rows))
+                width_per_image = int(math.floor(width / columns))
 
-            resized_img = image_resize(img, width=width_per_image)
+                GRID_HEIGHT = int(math.floor(height / GRID_X))
+                GRID_WIDTH = int(math.floor(width / GRID_Y))
 
-            resize_height, resize_width, resize_channnel = resized_img.shape
-            # resized_img = cv2.resize(img, (width_per_image,height_per_image), interpolation = cv2.INTER_CUBIC)
 
-            # Overlay the images to the background image
-            back_img = overlay_transparent(back_img,
-                resized_img,
-                (column_index * width_per_image),
-                (row_index * height_per_image)
-                )
+                total_sub_images = GRID_X * GRID_Y
 
-            box = {
-                    'confidence': 1,
-                    'x': str(((column_index * width_per_image) + ((column_index + 1) * width_per_image))/2),
-                    'y': str(((row_index * height_per_image) + ((row_index + 1) * height_per_image))/2),
-                    'height': str(resize_height),
-                    'width':str(resize_width),
-                    'max_width' : str(width),
-                    'max_height' : str(height)
-                }
+                imageName = uuid4()
 
-            bounding_box_for_image[i] = box
+                default_box = {
+                        'confidence' : 0,
+                        'x': 0,
+                        'y': 0,
+                        'height': 0,
+                        'width': 0,
+                        'max_width' : 0,
+                        'max_height' : 0
+                    }
 
-        cv2.imwrite(output_folder + "/images/" +  str(imageName) + '.jpg', back_img)
+                bounding_box_for_image = [default_box for i in range(total_sub_images)]
 
-        bounding_boxes[str(imageName)] = bounding_box_for_image
 
-        if not save_as_json:
-            with open(output_folder + mode + ".txt", "a") as txtfile:
-                txtfile.write(output_folder + "images/" + str(imageName) + ".jpg\n")
+                for i in range(0, total_sub_images):
 
-            with open(output_folder + "labels/" + str(imageName) + ".txt", "a") as txtfile:
-                for box in bounding_box_for_image:
+                    timer = int((rows * random.random()))
+                    if no_of_images == 0 and generate_mode == "random":
+                        continue
 
-                    confidence = float(box['confidence'])
+                    if generate_mode == "random" and timer > 0:
+                        timer -= 1
+                        continue
 
-                    if  confidence == 1.0:
-                        max_height = float(box['max_height'])
-                        max_width = float(box['max_width'])
+                    no_of_images -= 1
 
-                        x = float(box['x'])
-                        y = float(box['y'])
+                    # print("Starting sub image :" + str(i) )
+                    img = random.choice(sub_images)
+                    row_index = i // GRID_X
+                    column_index = i % GRID_Y
 
-                        height = float(box['height'])
-                        width = float(box['width'])
+                    resized_img = image_resize(img, width=width_per_image)
 
-                        scaled_x = x/max_width
-                        scaled_y = y/max_height
+                    resize_height, resize_width, resize_channnel = resized_img.shape
 
-                        scaled_height = height/max_height
-                        scaled_width = width/max_width
+                    # Overlay the images to the background image
+                    back_img = overlay_transparent(back_img,
+                        resized_img,
+                        (column_index * GRID_WIDTH),
+                        (row_index * GRID_HEIGHT)
+                        )
 
-                        write_str = str(confidence) + " " + class_label[output_currency] + " " + str(scaled_x) + " " + str(scaled_y) + " " + str(scaled_width) + " " + str(scaled_height) + "\n"
+                    box = {
+                            'confidence': 1,
+                            'x': str(((column_index * GRID_WIDTH) + ((column_index + 1) * GRID_WIDTH))/2),
+                            'y': str(((row_index * GRID_HEIGHT) + ((row_index + 1) * GRID_HEIGHT))/2),
+                            'height': str(resize_height),
+                            'width':str(resize_width),
+                            'max_width' : str(width),
+                            'max_height' : str(height)
+                        }
 
-                    else:
-                        write_str = str(confidence) + " 0 0 0 0 0\n"
+                    bounding_box_for_image[i] = box
 
-                    txtfile.write(write_str)
+                cv2.imwrite(output_folder + "/images/" +  str(imageName) + '.jpg', back_img)
 
-    if save_as_json:
-        with open(output_folder + 'bounding_boxes.json', 'w') as f:
-            json.dump(bounding_boxes, f)
+                bounding_boxes[str(imageName)] = bounding_box_for_image
+
+                if not save_as_json:
+                    with open(output_folder + mode + ".txt", "a") as txtfile:
+                        txtfile.write(output_folder + "images/" + str(imageName) + ".jpg\n")
+
+                    with open(output_folder + "labels/" + str(imageName) + ".txt", "a") as txtfile:
+                        for box in bounding_box_for_image:
+
+                            confidence = float(box['confidence'])
+
+                            if  confidence == 1.0:
+                                max_height = float(box['max_height'])
+                                max_width = float(box['max_width'])
+
+                                x = float(box['x'])
+                                y = float(box['y'])
+
+                                height = float(box['height'])
+                                width = float(box['width'])
+
+                                scaled_x = x/max_width
+                                scaled_y = y/max_height
+
+                                scaled_height = height/max_height
+                                scaled_width = width/max_width
+
+                                write_str = str(confidence) + " " + class_label[output_currency] + " " + str(scaled_x) + " " + str(scaled_y) + " " + str(scaled_width) + " " + str(scaled_height) + "\n"
+
+                            else:
+                                write_str = str(confidence) + " 0 0 0 0 0\n"
+
+                            txtfile.write(write_str)
+
+            if save_as_json:
+                with open(output_folder + 'bounding_boxes.json', 'w') as f:
+                    json.dump(bounding_boxes, f)
+
+def progress(count, total, suffix=''):
+    bar_len = 60
+    filled_len = int(round(bar_len * count / float(total)))
+
+    percents = round(100.0 * count / float(total), 1)
+    bar = '=' * filled_len + '-' * (bar_len - filled_len)
+
+    sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', suffix))
+    sys.stdout.flush()
 
 def read_subimages(path_to_folder):
     images = []
-    for filename in os.listdir(path_to_folder):
+    files = os.listdir(path_to_folder)
+    no_of_files = len(files)
+    files_read = 0
+
+    for filename in files:
         img = cv2.imread(os.path.join(path_to_folder,filename), cv2.IMREAD_UNCHANGED)
+
+        progress(files_read,no_of_files)
         if img is not None:
             images.append(img)
+
+        files_read += 1
     return images
 
 
@@ -224,29 +261,31 @@ if __name__ == "__main__" :
 
     class_label = {
         "RM50" : "0",
-        "RM100" : "1"
+        "RM1" : "1",
+        "RM10" : "2",
+        "RM20" : "3",
+
     }
 
     # Define the parameters here
-    r = 2
-    c = 2
-    mode = "test" # train or test
+    groups = 10
+    size = 8
+
+    mode = "train" # train or test
     generate_mode = "random" # grid or random
 
     background_images_path = "background/"
-    sub_images_path = "RM50/"
+    folder_path = "images/"
 
-    # output_folder = "data/train/"
-    output_folder = "data/test/"
+    output_currency = "RM10"                                # Change this
 
-    output_currency = "RM50"
+    sub_images_path = folder_path + output_currency
+
+
+    output_folder = "data/train/"
+    # output_folder = "data/test/"
 
     save_as_json = False
 
-    for i in range(20):
-        print(str(i))
-        main(rows=8, columns=8)
 
-#    n = 20
-#    for i in range(n,0,-1):
-#        main(rows=i, columns=i)
+    main()
