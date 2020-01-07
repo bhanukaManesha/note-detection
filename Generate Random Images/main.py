@@ -7,6 +7,7 @@ import imutils
 from uuid import uuid4
 import json
 import sys
+import copy
 
 GRID_X = 8
 GRID_Y = 8
@@ -43,21 +44,38 @@ def image_resize(image, width = None, height = None, inter = cv2.INTER_AREA):
     return resized
 
 
-def main() :
+def main(output_currency) :
     '''
     main function to generete the images
     @rows - number of rows for the image
     @col - number of columns for the image
     '''
 
-    print("Reading " + str(output_currency) + " notes and background images")
-
+    print("Reading background background images\n")
     # Reading the images
-    background_images = read_subimages(background_images_path)
-    sub_images = read_subimages(sub_images_path)
+    background_images_ori = read_subimages(background_images_path)
 
+
+    if mode == "test":
+        sub_images = [0,0,0,0]
+        print("Reading RM50 notes and background images\n")
+        sub_images[0] = read_subimages(folder_path + "RM50")
+        print("Reading RM1 notes and background images\n")
+        sub_images[1] = read_subimages(folder_path + "RM1")
+        print("Reading RM10 notes and background images\n")
+        sub_images[2] = read_subimages(folder_path + "RM10")
+        print("Reading RM20 notes and background images\n")
+        sub_images[3] = read_subimages(folder_path + "RM20")
+    else:
+        print("Reading " + str(output_currency) + " notes and background images\n")
+        sub_images = read_subimages(sub_images_path)
+
+    print()
     print("Read all images")
 
+    print("Generating the images")
+
+    count = 0
     total = sum(np.dot(groups,range(size,0,-1)))
 
 
@@ -74,12 +92,21 @@ def main() :
 
             count += 1
 
+            background_images = copy.deepcopy(background_images_ori)
 
             for back_img in background_images:
 
-                no_of_images = 8
+                if size >= 6:
+                    no_of_images = 8
+                elif size > 4:
+                    no_of_images = 3
+                else:
+                    no_of_images = 1
 
-                resized_images = []
+                if empty_images:
+                    no_of_images = 0
+
+
 
                 # Calculating the height and width
                 height, width, channels = back_img.shape
@@ -121,7 +148,17 @@ def main() :
                     no_of_images -= 1
 
                     # print("Starting sub image :" + str(i) )
-                    img = random.choice(sub_images)
+
+
+                    if mode == "train":
+                        img = random.choice(sub_images)
+
+                    else:
+                        currency_index = random.randint(0,len(class_label) - 1)
+                        output_currency = class_label_index[currency_index]
+                        img = random.choice(sub_images[currency_index])
+
+
                     row_index = i // GRID_X
                     column_index = i % GRID_Y
 
@@ -143,7 +180,8 @@ def main() :
                             'height': str(resize_height),
                             'width':str(resize_width),
                             'max_width' : str(width),
-                            'max_height' : str(height)
+                            'max_height' : str(height),
+                            'class' : str(class_label[output_currency])
                         }
 
                     bounding_box_for_image[i] = box
@@ -177,16 +215,16 @@ def main() :
                                 scaled_height = height/max_height
                                 scaled_width = width/max_width
 
-                                write_str = str(confidence) + " " + class_label[output_currency] + " " + str(scaled_x) + " " + str(scaled_y) + " " + str(scaled_width) + " " + str(scaled_height) + "\n"
+                                write_str = str(confidence) + " " + box["class"] + " " + str(scaled_x) + " " + str(scaled_y) + " " + str(scaled_width) + " " + str(scaled_height) + "\n"
 
                             else:
                                 write_str = str(confidence) + " 0 0 0 0 0\n"
 
                             txtfile.write(write_str)
 
-            if save_as_json:
-                with open(output_folder + 'bounding_boxes.json', 'w') as f:
-                    json.dump(bounding_boxes, f)
+                    if save_as_json:
+                        with open(output_folder + 'bounding_boxes.json', 'w') as f:
+                            json.dump(bounding_boxes, f)
 
 def progress(count, total, suffix=''):
     bar_len = 60
@@ -259,6 +297,7 @@ def overlay_transparent(background, overlay, x, y):
 
 if __name__ == "__main__" :
 
+    class_label_index = ["RM50", "RM1", "RM10", "RM20"]
     class_label = {
         "RM50" : "0",
         "RM1" : "1",
@@ -268,24 +307,32 @@ if __name__ == "__main__" :
     }
 
     # Define the parameters here
-    groups = 10
-    size = 8
-
-    mode = "train" # train or test
+    mode = "test" # train or test
     generate_mode = "random" # grid or random
+    empty_images = False # determine whether to generete empty images
+
+    if generate_mode == "grid":
+        groups = 2
+        size = 8
+    else:
+        groups = 10
+        size = 8
+
+    if empty_images:
+        groups = 3
+        size = 8
+
 
     background_images_path = "background/"
     folder_path = "images/"
 
-    output_currency = "RM10"                                # Change this
+    output_currency_str = "RM50"                             # Change this
 
-    sub_images_path = folder_path + output_currency
+    sub_images_path = folder_path + output_currency_str
 
-
-    output_folder = "data/train/"
-    # output_folder = "data/test/"
+    # output_folder = "data/train/"
+    output_folder = "data/test/"
 
     save_as_json = False
 
-
-    main()
+    main(output_currency_str)
