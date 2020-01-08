@@ -173,21 +173,21 @@ def main(output_currency) :
 
                     resize_height, resize_width, resize_channnel = resized_img.shape
 
-                    rand_x = int((random.random() * GRID_WIDTH) + (column_index * GRID_WIDTH))
-                    rand_y = int((random.random() * GRID_HEIGHT) + (row_index * GRID_HEIGHT))
+                    rand_x = int((random.random() * GRID_WIDTH))
+                    rand_y = int((random.random() * GRID_HEIGHT))
 
                     # Overlay the images to the background image
                     back_img = overlay_transparent(
                         back_img,
                         resized_img,
-                        rand_x,
-                        rand_y
+                        rand_x + (column_index * GRID_WIDTH),
+                        rand_y + (row_index * GRID_HEIGHT)
                         )
 
                     box = {
                             'confidence': 1,
-                            'x': str((rand_x + resize_width)/2),
-                            'y': str((rand_y + resize_height)/2),
+                            'x': str(rand_x/GRID_WIDTH),
+                            'y': str(rand_y/GRID_HEIGHT),
                             'height': str(resize_height),
                             'width':str(resize_width),
                             'max_width' : str(width),
@@ -318,7 +318,7 @@ if __name__ == "__main__" :
     }
 
     # Define the parameters here
-    mode = "train" # train or test
+    mode = "test" # train or test
     generate_mode = "random" # grid or random
     empty_images = False # determine whether to generete empty images
 
@@ -341,8 +341,8 @@ if __name__ == "__main__" :
 
     sub_images_path = folder_path + output_currency_str
 
-    output_folder = "data/train/"
-    # output_folder = "data/test/"
+    # output_folder = "data/train/"
+    output_folder = "data/test/"
 
     save_as_json = False
 
