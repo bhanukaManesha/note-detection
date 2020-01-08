@@ -37,6 +37,9 @@ def image_resize(image, width = None, height = None, inter = cv2.INTER_AREA):
         r = width / float(w)
         dim = (width, int(h * r))
 
+    if width is not None and height is not None:
+        dim = (width,height)
+
     # resize the image
     resized = cv2.resize(image, dim, interpolation = inter)
 
@@ -55,6 +58,10 @@ def main(output_currency) :
     # Reading the images
     background_images_ori = read_subimages(background_images_path)
 
+    for i in range(len(background_images_ori)):
+        background_images_ori[i] = image_resize(background_images_ori[i], width = 128, height = 128)
+
+        # print(background_images_ori[i].shape)
 
     if mode == "test":
         sub_images = [0,0,0,0]
@@ -166,17 +173,21 @@ def main(output_currency) :
 
                     resize_height, resize_width, resize_channnel = resized_img.shape
 
+                    rand_x = int((random.random() * GRID_WIDTH) + (column_index * GRID_WIDTH))
+                    rand_y = int((random.random() * GRID_HEIGHT) + (row_index * GRID_HEIGHT))
+
                     # Overlay the images to the background image
-                    back_img = overlay_transparent(back_img,
+                    back_img = overlay_transparent(
+                        back_img,
                         resized_img,
-                        (column_index * GRID_WIDTH),
-                        (row_index * GRID_HEIGHT)
+                        rand_x,
+                        rand_y
                         )
 
                     box = {
                             'confidence': 1,
-                            'x': str(((column_index * GRID_WIDTH) + ((column_index + 1) * GRID_WIDTH))/2),
-                            'y': str(((row_index * GRID_HEIGHT) + ((row_index + 1) * GRID_HEIGHT))/2),
+                            'x': str((rand_x + resize_width)/2),
+                            'y': str((rand_y + resize_height)/2),
                             'height': str(resize_height),
                             'width':str(resize_width),
                             'max_width' : str(width),
@@ -307,7 +318,7 @@ if __name__ == "__main__" :
     }
 
     # Define the parameters here
-    mode = "test" # train or test
+    mode = "train" # train or test
     generate_mode = "random" # grid or random
     empty_images = False # determine whether to generete empty images
 
@@ -326,12 +337,12 @@ if __name__ == "__main__" :
     background_images_path = "background/"
     folder_path = "images/"
 
-    output_currency_str = "RM50"                             # Change this
+    output_currency_str = "RM1"                             # Change this
 
     sub_images_path = folder_path + output_currency_str
 
-    # output_folder = "data/train/"
-    output_folder = "data/test/"
+    output_folder = "data/train/"
+    # output_folder = "data/test/"
 
     save_as_json = False
 
