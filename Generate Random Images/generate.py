@@ -103,13 +103,6 @@ def main(output_currency) :
 
             for back_img in background_images:
 
-                if i >= 6:
-                    no_of_images = 8
-                elif i > 4:
-                    no_of_images = 3
-                else:
-                    no_of_images = 1
-
                 if empty_images:
                     no_of_images = 0
 
@@ -127,16 +120,22 @@ def main(output_currency) :
 
                 total_sub_images = GRID_X * GRID_Y
 
+                no_of_images = total_sub_images
+
                 imageName = uuid4()
 
                 default_box = {
-                        'confidence' : 0,
-                        'x': 0,
-                        'y': 0,
-                        'height': 0,
-                        'width': 0,
-                        'max_width' : 0,
-                        'max_height' : 0
+                    'confidence' : 0,
+                    'x': 0,
+                    'y': 0,
+                    'height': 0,
+                    'width': 0,
+                    'max_width' : 0,
+                    'max_height' : 0,
+                    "x1" : 0,
+                    "y1" : 0,
+                    "x2" : 0,
+                    "y2" : 0
                     }
 
                 bounding_box_for_image = [default_box for i in range(total_sub_images)]
@@ -176,37 +175,76 @@ def main(output_currency) :
                     rand_x = int((random.random() * GRID_WIDTH))
                     rand_y = int((random.random() * GRID_HEIGHT))
 
-                    corners = {
+                    potential_box = {
                         "x1": rand_x + (column_index * GRID_WIDTH) ,
                         "y1": rand_y + (row_index * GRID_HEIGHT),
                         "x2": rand_x + (column_index * GRID_WIDTH) + resize_width,
-                        "y2": rand_y + (row_index * GRID_HEIGHT) + resize_height,
+                        "y2": rand_y + (row_index * GRID_HEIGHT) + resize_height
                     }
 
-                    for index in range(0,i+1):
-                        old_box = bounding_box_for_image[i]
                     
 
-                    # Overlay the images to the background image
-                    back_img = overlay_transparent(
-                        back_img,
-                        resized_img,
-                        rand_x + (column_index * GRID_WIDTH),
-                        rand_y + (row_index * GRID_HEIGHT)
-                        )
+                    place = True
 
-                    box = {
-                            'confidence': 1,
-                            'x': str(rand_x + resize_width/2),
-                            'y': str(rand_y + resize_height/2),
-                            'height': str(resize_height),
-                            'width':str(resize_width),
-                            'max_width' : str(width),
-                            'max_height' : str(height),
-                            'class' : str(class_label[output_currency])
-                        }
+                    for index in range(0,i+1):
+                       
+                        old_box = bounding_box_for_image[index]
 
-                    bounding_box_for_image[i] = box
+                        # if old_box["confidence"] == 1:
+                        #     print(corners)
+                        #     print(old_box)
+                        
+                        if  int(old_box["confidence"]) == 1 or doOverlap(old_box, potential_box) or doOverlap(potential_box, old_box): 
+                            place = False
+                            break
+
+                    if place :
+
+                        # Find the correct grid location
+                        grid_location_x = (rand_x + (column_index * GRID_WIDTH) + resize_width/2)
+                        grid_location_y = (rand_y + (row_index * GRID_HEIGHT) + resize_height/2)
+
+                        if grid_location_x >= width or grid_location_y >= height:
+                            # print("error")
+                            continue
+
+                        # Overlay the images to the background image
+                        back_img = overlay_transparent(
+                            back_img,
+                            resized_img,
+                            potential_box["x1"],
+                            potential_box["y1"]
+                            )
+
+                        # print("Grid X" + str(grid_location_x))
+                        # print("Grid Y" + str(grid_location_y))
+
+                        col_index = (grid_location_x // GRID_WIDTH)
+                        row_index = (grid_location_y // GRID_HEIGHT)
+
+                        
+                        # print("x" + str(col_index))
+                        # print("y" + str(row_index))
+                        loc = GRID_X * row_index + col_index
+
+                        # print(loc)
+                        box = {
+                                'confidence': 1,
+                                'x': str(grid_location_x - (grid_location_x // GRID_WIDTH) * GRID_WIDTH ),
+                                'y': str(grid_location_y - (grid_location_y // GRID_HEIGHT) * GRID_HEIGHT ),
+                                'height': str(resize_height),
+                                'width':str(resize_width),
+                                'max_width' : str(width),
+                                'max_height' : str(height),
+                                'class' : str(class_label[output_currency]),
+                                "x1" : str(potential_box["x1"]),
+                                "y1" : str(potential_box["y1"]),
+                                "x2" : str(potential_box["x2"]),
+                                "y2" : str(potential_box["y2"])
+                            }
+
+                        bounding_box_for_image[loc] = box
+                        
 
                 cv2.imwrite(output_folder + "/images/" +  str(imageName) + '.jpg', back_img)
 
@@ -231,8 +269,8 @@ def main(output_currency) :
                                 height = float(box['height'])
                                 width = float(box['width'])
 
-                                scaled_x = x/max_width
-                                scaled_y = y/max_height
+                                scaled_x = x/GRID_WIDTH
+                                scaled_y = y/GRID_HEIGHT
 
                                 scaled_height = height/max_height
                                 scaled_width = width/max_width
@@ -282,6 +320,16 @@ def overlay_image(layer0_img, layer1_img, x, y):
     layer0_img[y: y + height, x: x + width ] = layer1_img
 
     return layer0_img
+
+def doOverlap(first, second): 
+   
+    if(first["x1"] > second["x2"] or first["x2"] < second["x1"]): 
+        return False
+  
+    if(first["y1"] > second["y2"] or first["y2"] < second["y1"]): 
+        return False
+  
+    return True
 
 def overlay_transparent(background, overlay, x, y):
 
