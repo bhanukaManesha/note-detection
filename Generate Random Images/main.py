@@ -103,9 +103,9 @@ def main(output_currency) :
 
             for back_img in background_images:
 
-                if size >= 6:
+                if i >= 6:
                     no_of_images = 8
-                elif size > 4:
+                elif i > 4:
                     no_of_images = 3
                 else:
                     no_of_images = 1
@@ -176,6 +176,17 @@ def main(output_currency) :
                     rand_x = int((random.random() * GRID_WIDTH))
                     rand_y = int((random.random() * GRID_HEIGHT))
 
+                    corners = {
+                        "x1": rand_x + (column_index * GRID_WIDTH) ,
+                        "y1": rand_y + (row_index * GRID_HEIGHT),
+                        "x2": rand_x + (column_index * GRID_WIDTH) + resize_width,
+                        "y2": rand_y + (row_index * GRID_HEIGHT) + resize_height,
+                    }
+
+                    for index in range(0,i+1):
+                        old_box = bounding_box_for_image[i]
+                    
+
                     # Overlay the images to the background image
                     back_img = overlay_transparent(
                         back_img,
@@ -186,8 +197,8 @@ def main(output_currency) :
 
                     box = {
                             'confidence': 1,
-                            'x': str(rand_x/GRID_WIDTH),
-                            'y': str(rand_y/GRID_HEIGHT),
+                            'x': str(rand_x + resize_width/2),
+                            'y': str(rand_y + resize_height/2),
                             'height': str(resize_height),
                             'width':str(resize_width),
                             'max_width' : str(width),
@@ -318,7 +329,7 @@ if __name__ == "__main__" :
     }
 
     # Define the parameters here
-    mode = "test" # train or test
+    mode = "train" # train or test
     generate_mode = "random" # grid or random
     empty_images = False # determine whether to generete empty images
 
@@ -326,7 +337,7 @@ if __name__ == "__main__" :
         groups = 2
         size = 8
     else:
-        groups = 10
+        groups = 20
         size = 8
 
     if empty_images:
@@ -341,8 +352,8 @@ if __name__ == "__main__" :
 
     sub_images_path = folder_path + output_currency_str
 
-    # output_folder = "data/train/"
-    output_folder = "data/test/"
+    output_folder = "data/train/"
+    # output_folder = "data/test/"
 
     save_as_json = False
 
