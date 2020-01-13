@@ -175,10 +175,10 @@ def preprocessing_for_canny(img) :
 
     if isGreen :
         # mask for green
-        mask = cv2.inRange(hsv, (36, 25, 25), (85, 255,255))
+        mask = cv2.inRange(hsv, (36, 25, 25), (100, 255,255))
     else :
         # mask for blue
-        mask = cv2.inRange(hsv, (36, 25, 25), (70, 255,255))
+        mask = cv2.inRange(hsv, (90, 25, 25), (140, 255,255))
 
     ## slice the mask
     imask = mask == 0
@@ -239,7 +239,7 @@ if __name__ == "__main__" :
         videoPath = sys.argv[1]
         outputPath = sys.argv[2]
 
-        isGreen = True
+        isGreen = False
 
         isChoseParameters = False
         if verbose == 2:

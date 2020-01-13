@@ -46,8 +46,7 @@ def image_resize(image, width = None, height = None, inter = cv2.INTER_AREA):
     # return the resized image
     return resized
 
-
-def main(output_currency) :
+def generate(output_currency) :
     '''
     main function to generete the images
     @rows - number of rows for the image
@@ -83,25 +82,26 @@ def main(output_currency) :
     print("Generating the images")
 
     count = 0
-    total = sum(np.dot(groups,range(size,0,-1)))
 
+    total_rounds = groups * size * len(background_images_ori)
 
     for j in range(groups):
 
         for i in range(size,0,-1):
-
-            progress(count, total)
 
             rows = i
             columns = i
 
             bounding_boxes = {}
 
-            count += 1
+
 
             background_images = copy.deepcopy(background_images_ori)
 
             for back_img in background_images:
+
+                progress(count, total_rounds)
+                count += 1
 
                 if empty_images:
                     no_of_images = 0
@@ -132,10 +132,10 @@ def main(output_currency) :
                     'width': 0,
                     'max_width' : 0,
                     'max_height' : 0,
-                    "x1" : 0,
-                    "y1" : 0,
-                    "x2" : 0,
-                    "y2" : 0
+                    "x1" : -1,
+                    "y1" : -1,
+                    "x2" : -1,
+                    "y2" : -1
                     }
 
                 bounding_box_for_image = [default_box for i in range(total_sub_images)]
@@ -182,19 +182,13 @@ def main(output_currency) :
                         "y2": rand_y + (row_index * GRID_HEIGHT) + resize_height
                     }
 
-                    
-
                     place = True
 
-                    for index in range(0,i+1):
+                    for index in range(0,total_sub_images):
                        
                         old_box = bounding_box_for_image[index]
 
-                        # if old_box["confidence"] == 1:
-                        #     print(corners)
-                        #     print(old_box)
-                        
-                        if  int(old_box["confidence"]) == 1 or doOverlap(old_box, potential_box) or doOverlap(potential_box, old_box): 
+                        if  doOverlap(old_box, potential_box):
                             place = False
                             break
 
@@ -243,7 +237,7 @@ def main(output_currency) :
                                 "y2" : str(potential_box["y2"])
                             }
 
-                        bounding_box_for_image[loc] = box
+                        bounding_box_for_image[int(loc)] = box
                         
 
                 cv2.imwrite(output_folder + "/images/" +  str(imageName) + '.jpg', back_img)
@@ -312,7 +306,6 @@ def read_subimages(path_to_folder):
         files_read += 1
     return images
 
-
 def overlay_image(layer0_img, layer1_img, x, y):
 
     height, width, channel = layer1_img.shape
@@ -322,14 +315,19 @@ def overlay_image(layer0_img, layer1_img, x, y):
     return layer0_img
 
 def doOverlap(first, second): 
-   
-    if(first["x1"] > second["x2"] or first["x2"] < second["x1"]): 
-        return False
+    x_axis_not_overlap = False
+    y_axis_not_overlap = False
+
+    if(int(first["x1"]) > int(second["x2"]) or int(first["x2"]) < int(second["x1"])):
+        x_axis_not_overlap = True
   
-    if(first["y1"] > second["y2"] or first["y2"] < second["y1"]): 
-        return False
+    if(int(first["y1"]) > int(second["y2"]) or int(first["y2"]) < int(second["y1"])):
+        y_axis_not_overlap = True
   
-    return True
+    if x_axis_not_overlap and y_axis_not_overlap:
+        return False
+    else:
+        return True
 
 def overlay_transparent(background, overlay, x, y):
 
@@ -367,25 +365,25 @@ def overlay_transparent(background, overlay, x, y):
 
 if __name__ == "__main__" :
 
-    class_label_index = ["RM50", "RM1", "RM10", "RM20"]
+    class_label_index = ["RM50", "RM1", "RM10", "RM20","RM100"]
     class_label = {
         "RM50" : "0",
         "RM1" : "1",
         "RM10" : "2",
         "RM20" : "3",
-
+        "RM100" : "4"
     }
 
     # Define the parameters here
     mode = "train" # train or test
-    generate_mode = "random" # grid or random
+    generate_mode = "grid" # grid or random
     empty_images = False # determine whether to generete empty images
 
     if generate_mode == "grid":
-        groups = 2
+        groups = 4
         size = 8
     else:
-        groups = 20
+        groups = 4
         size = 8
 
     if empty_images:
@@ -395,14 +393,15 @@ if __name__ == "__main__" :
 
     background_images_path = "background/"
     folder_path = "images/"
-
-    output_currency_str = "RM1"                             # Change this
+a
+    output_currency_str = "RM20"                             # Change this
 
     sub_images_path = folder_path + output_currency_str
 
     output_folder = "data/train/"
     # output_folder = "data/test/"
+    # output_folder = "data/additional/"
 
     save_as_json = False
 
-    main(output_currency_str)
+    generate(output_currency_str)
