@@ -63,7 +63,7 @@ def generate(output_currency) :
         # print(background_images_ori[i].shape)
 
     if mode == "test":
-        sub_images = [0,0,0,0]
+        sub_images = [0,0,0,0,0]
         print("Reading RM50 notes and background images\n")
         sub_images[0] = read_subimages(folder_path + "RM50")
         print("Reading RM1 notes and background images\n")
@@ -72,6 +72,8 @@ def generate(output_currency) :
         sub_images[2] = read_subimages(folder_path + "RM10")
         print("Reading RM20 notes and background images\n")
         sub_images[3] = read_subimages(folder_path + "RM20")
+        print("Reading RM100 notes and background images\n")
+        sub_images[4] = read_subimages(folder_path + "RM100")
     else:
         print("Reading " + str(output_currency) + " notes and background images\n")
         sub_images = read_subimages(sub_images_path)
@@ -365,14 +367,20 @@ def overlay_transparent(background, overlay, x, y):
 
 if __name__ == "__main__" :
 
-    class_label_index = ["RM50", "RM1", "RM10", "RM20","RM100"]
+    class_label_index = ["RM50", "RM100"]
     class_label = {
         "RM50" : "0",
-        "RM1" : "1",
-        "RM10" : "2",
-        "RM20" : "3",
-        "RM100" : "4"
+        "RM100" : "1"
     }
+
+    # class_label_index = ["RM50", "RM1", "RM10", "RM20","RM100"]
+    # class_label = {
+    #     "RM50" : "0",
+    #     "RM1" : "1",
+    #     "RM10" : "2",
+    #     "RM20" : "3",
+    #     "RM100" : "4"
+    # }
 
     # Define the parameters here
     mode = "train" # train or test
@@ -380,7 +388,7 @@ if __name__ == "__main__" :
     empty_images = False # determine whether to generete empty images
 
     if generate_mode == "grid":
-        groups = 4
+        groups = 3
         size = 8
     else:
         groups = 4
@@ -393,8 +401,8 @@ if __name__ == "__main__" :
 
     background_images_path = "background/"
     folder_path = "images/"
-a
-    output_currency_str = "RM20"                             # Change this
+
+    output_currency_str = "RM100"                             # Change this
 
     sub_images_path = folder_path + output_currency_str
 
