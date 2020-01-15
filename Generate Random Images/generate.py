@@ -58,7 +58,7 @@ def generate(output_currency) :
     background_images_ori = read_subimages(background_images_path)
 
     for i in range(len(background_images_ori)):
-        background_images_ori[i] = image_resize(background_images_ori[i], width = 128, height = 128)
+        background_images_ori[i] = image_resize(background_images_ori[i], width = 512, height = 512)
 
         # print(background_images_ori[i].shape)
 
@@ -104,9 +104,6 @@ def generate(output_currency) :
 
                 progress(count, total_rounds)
                 count += 1
-
-                if empty_images:
-                    no_of_images = 0
 
 
 
