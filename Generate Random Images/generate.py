@@ -58,22 +58,22 @@ def generate(output_currency) :
     background_images_ori = read_subimages(background_images_path)
 
     for i in range(len(background_images_ori)):
-        background_images_ori[i] = image_resize(background_images_ori[i], width = 128, height = 128)
+        background_images_ori[i] = image_resize(background_images_ori[i], width = 64, height = 64)
 
         # print(background_images_ori[i].shape)
 
     if mode == "test":
-        sub_images = [0,0,0,0,0]
+        sub_images = [0,0]
         print("Reading RM50 notes and background images\n")
         sub_images[0] = read_subimages(folder_path + "RM50")
-        print("Reading RM1 notes and background images\n")
-        sub_images[1] = read_subimages(folder_path + "RM1")
-        print("Reading RM10 notes and background images\n")
-        sub_images[2] = read_subimages(folder_path + "RM10")
-        print("Reading RM20 notes and background images\n")
-        sub_images[3] = read_subimages(folder_path + "RM20")
+        # print("Reading RM1 notes and background images\n")
+        # sub_images[1] = read_subimages(folder_path + "RM1")
+        # print("Reading RM10 notes and background images\n")
+        # sub_images[2] = read_subimages(folder_path + "RM10")
+        # print("Reading RM20 notes and background images\n")
+        # sub_images[3] = read_subimages(folder_path + "RM20")
         print("Reading RM100 notes and background images\n")
-        sub_images[4] = read_subimages(folder_path + "RM100")
+        sub_images[1] = read_subimages(folder_path + "RM100")
     else:
         print("Reading " + str(output_currency) + " notes and background images\n")
         sub_images = read_subimages(sub_images_path)
@@ -104,9 +104,6 @@ def generate(output_currency) :
 
                 progress(count, total_rounds)
                 count += 1
-
-                if empty_images:
-                    no_of_images = 0
 
 
 
@@ -175,7 +172,7 @@ def generate(output_currency) :
                     resize_height, resize_width, resize_channnel = resized_img.shape
 
                     rand_x = int((random.random() * GRID_WIDTH))
-                    rand_y = int((random.random() * GRID_HEIGHT))
+                    rand_y = int((random.random() * GRID_HEIGHT))            
 
                     potential_box = {
                         "x1": rand_x + (column_index * GRID_WIDTH) ,
@@ -195,14 +192,17 @@ def generate(output_currency) :
                             break
 
                     if place :
-
+                        
                         # Find the correct grid location
                         grid_location_x = (rand_x + (column_index * GRID_WIDTH) + resize_width/2)
                         grid_location_y = (rand_y + (row_index * GRID_HEIGHT) + resize_height/2)
 
+
                         if grid_location_x >= width or grid_location_y >= height:
                             # print("error")
                             continue
+
+                        
 
                         # Overlay the images to the background image
                         back_img = overlay_transparent(
@@ -218,7 +218,6 @@ def generate(output_currency) :
                         col_index = (grid_location_x // GRID_WIDTH)
                         row_index = (grid_location_y // GRID_HEIGHT)
 
-                        
                         # print("x" + str(col_index))
                         # print("y" + str(row_index))
                         loc = GRID_X * row_index + col_index
@@ -383,13 +382,13 @@ if __name__ == "__main__" :
     # }
 
     # Define the parameters here
-    mode = "train" # train or test
+    mode = "test" # train or test
     generate_mode = "grid" # grid or random
     empty_images = False # determine whether to generete empty images
 
     if generate_mode == "grid":
-        groups = 3
-        size = 8
+        groups = 12
+        size = 2
     else:
         groups = 4
         size = 8
@@ -402,14 +401,13 @@ if __name__ == "__main__" :
     background_images_path = "background/"
     folder_path = "images/"
 
-    output_currency_str = "RM100"                             # Change this
+    output_currency_str = "RM50"                             # Change this
 
     sub_images_path = folder_path + output_currency_str
 
-    output_folder = "data/train/"
-    # output_folder = "data/test/"
+    # output_folder = "data/train/"
+    output_folder = "data/test/"
     # output_folder = "data/additional/"
 
     save_as_json = False
-
     generate(output_currency_str)
