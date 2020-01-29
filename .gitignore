@@ -1,20 +1,28 @@
 .DS_Store
-OpenCV Cash Labeling/cash-project/
+.pylintrc
+.mypy_cache/
+
+opencvenv/
+
 PyTorch Cash Classification/pytorchenv/
 PyTorch Cash Classification/cash/
+
+OpenCV Cash Labeling/cash-project/
 OpenCV Cash Labeling/dataset/
 OpenCV Cash Labeling/experiment frames/
 OpenCV Cash Labeling/experiment/
 OpenCV Cash Labeling/testing/
 OpenCV Cash Labeling/.vscode/
-Archived\ Scripts/
-.pylintrc
-Documents/
-opencvenv/
+
 Generate Random Images/RM50/
 Generate Random Images/background/
 Generate Random Images/final_data/
-.mypy_cache/
 Generate Random Images/test/
 Generate Random Images/data/
 Generate Random Images/images/
+Generate Random Images/.idea/
+Generate Random Images/generate_data/
+Generate Random Images/test_background/
+Generate Random Images/test_images/
+
+Archived\ Scripts/

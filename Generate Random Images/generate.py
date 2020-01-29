@@ -63,17 +63,17 @@ def generate(output_currency) :
         # print(background_images_ori[i].shape)
 
     if mode == "test":
-        sub_images = [0,0]
+        sub_images = [0,0,0,0,0]
         print("Reading RM50 notes and background images\n")
         sub_images[0] = read_subimages(folder_path + "RM50")
-        # print("Reading RM1 notes and background images\n")
-        # sub_images[1] = read_subimages(folder_path + "RM1")
-        # print("Reading RM10 notes and background images\n")
-        # sub_images[2] = read_subimages(folder_path + "RM10")
-        # print("Reading RM20 notes and background images\n")
-        # sub_images[3] = read_subimages(folder_path + "RM20")
+        print("Reading RM1 notes and background images\n")
+        sub_images[1] = read_subimages(folder_path + "RM1")
+        print("Reading RM10 notes and background images\n")
+        sub_images[2] = read_subimages(folder_path + "RM10")
+        print("Reading RM20 notes and background images\n")
+        sub_images[3] = read_subimages(folder_path + "RM20")
         print("Reading RM100 notes and background images\n")
-        sub_images[1] = read_subimages(folder_path + "RM100")
+        sub_images[4] = read_subimages(folder_path + "RM100")
     else:
         print("Reading " + str(output_currency) + " notes and background images\n")
         sub_images = read_subimages(sub_images_path)
@@ -95,8 +95,6 @@ def generate(output_currency) :
             columns = i
 
             bounding_boxes = {}
-
-
 
             background_images = copy.deepcopy(background_images_ori)
 
@@ -141,6 +139,9 @@ def generate(output_currency) :
 
 
                 for i in range(0, total_sub_images):
+
+                    if empty_images:
+                        continue
 
                     timer = int((rows * random.random()))
                     if no_of_images == 0 and generate_mode == "random":
@@ -366,13 +367,13 @@ def overlay_transparent(background, overlay, x, y):
 
 if __name__ == "__main__" :
 
-    class_label_index = ["RM50", "RM100"]
-    class_label = {
-        "RM50" : "0",
-        "RM100" : "1"
-    }
+    # class_label_index = ["RM50", "RM100"]
+    # class_label = {
+    #     "RM50" : "0",
+    #     "RM100" : "1"
+    # }
 
-    # class_label_index = ["RM50", "RM1", "RM10", "RM20","RM100"]
+    class_label_index = ["RM50", "RM1", "RM10", "RM20","RM100"]
     # class_label = {
     #     "RM50" : "0",
     #     "RM1" : "1",
@@ -381,32 +382,39 @@ if __name__ == "__main__" :
     #     "RM100" : "4"
     # }
 
+    class_label = {
+        "RM50" : "0",
+    }
+
+
     # Define the parameters here
-    mode = "test" # train or test
+    mode = "train" # train or test
     generate_mode = "grid" # grid or random
     empty_images = False # determine whether to generete empty images
 
     if generate_mode == "grid":
-        groups = 12
-        size = 2
+        groups = 1
+        size = 1
     else:
         groups = 4
         size = 8
 
     if empty_images:
-        groups = 3
-        size = 8
+        groups = 100
+        size = 2
 
 
-    background_images_path = "background/"
+    # background_images_path = "background/"
+    background_images_path = "test_background/"
     folder_path = "images/"
 
     output_currency_str = "RM50"                             # Change this
 
     sub_images_path = folder_path + output_currency_str
 
+    output_folder = "test_images/"
     # output_folder = "data/train/"
-    output_folder = "data/test/"
+    # output_folder = "data/test/"
     # output_folder = "data/additional/"
 
     save_as_json = False
