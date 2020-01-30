@@ -58,7 +58,7 @@ def generate(output_currency) :
     background_images_ori = read_subimages(background_images_path)
 
     for i in range(len(background_images_ori)):
-        background_images_ori[i] = image_resize(background_images_ori[i], width = 64, height = 64)
+        background_images_ori[i] = image_resize(background_images_ori[i], width = 224, height = 224)
 
         # print(background_images_ori[i].shape)
 
@@ -393,7 +393,7 @@ if __name__ == "__main__" :
     empty_images = False # determine whether to generete empty images
 
     if generate_mode == "grid":
-        groups = 1
+        groups = 100
         size = 1
     else:
         groups = 4

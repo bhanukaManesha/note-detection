@@ -22,7 +22,7 @@ def resize_image(image, height, width, channels):
 
 def extract(save_path):
 
-    boxes = [[0.0,0,0,0,0,0] for i in range(64)]
+    boxes = [[0.0,0,0,0,0,0] for i in range(49)]
 
     namefile = open(output_dir + "/validation.txt", "a+")
 
@@ -40,7 +40,7 @@ def extract(save_path):
         ret, frame = cap.read()
         if ret == True:
             
-            small_frame = resize_image(frame, 64, 64, 3) * 255.0
+            small_frame = resize_image(frame, 224, 224, 3) * 255.0
 
             image_name = str(uuid4())
             cv2.imwrite(save_path + "/images/" + image_name + ".jpg",small_frame)
