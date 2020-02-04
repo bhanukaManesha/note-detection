@@ -1,5 +1,5 @@
 {
-    "python.pythonPath": "opencvenv/bin/python",
+    "python.pythonPath": "/Users/bhanuka/.pyenv/versions/3.6.0/bin/python",
     "python.linting.pylintEnabled": false,
     "python.linting.enabled": true,
     "python.linting.pycodestyleEnabled": false,
