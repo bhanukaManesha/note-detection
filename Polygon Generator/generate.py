@@ -2,9 +2,9 @@ import cv2, glob, pathlib, json
 import numpy as np
 
 
-def get_polygons(folder):
+def get_polygons(folder, currency):
 
-    for apath in sorted(glob.glob('{}/images/*.png'.format(folder))):
+    for apath in sorted(glob.glob('{}/{}/images/*.png'.format(folder,currency))):
         name = pathlib.Path(apath).stem
 
         img = cv2.imread('{}'.format(apath), 0)
@@ -21,7 +21,7 @@ def get_polygons(folder):
             for [[x,y]] in contour:
                 label['points'].append([float(x),float(y)])
 
-        with open('{}/labels/{}.json'.format(folder,name), 'w') as f:
+        with open('{}/{}/labels/{}.json'.format(folder,currency,name), 'w') as f:
             json.dump(label, f)
 
         img2 = cv2.drawContours(img2, contours, -1, (0,255,0), 3)
@@ -35,4 +35,4 @@ def get_polygons(folder):
 
 
 if __name__ == "__main__":
-    get_polygons("data")
+    get_polygons("data", "RM100")
