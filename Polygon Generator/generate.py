@@ -1,20 +1,38 @@
-import cv2
+import cv2, glob, pathlib, json
 import numpy as np
 
-img = cv2.imread('data/1.png', 0)
-img = cv2.medianBlur(img, 5)
-thresh = cv2.adaptiveThreshold(img,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY,11,2)
 
-cv2.imshow('Image', thresh)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+def get_polygons(folder):
+
+    for apath in sorted(glob.glob('{}/images/*.png'.format(folder))):
+        name = pathlib.Path(apath).stem
+
+        img = cv2.imread('{}'.format(apath), 0)
+        img2 = cv2.imread('{}'.format(apath), cv2.IMREAD_UNCHANGED)
+
+        img = cv2.medianBlur(img, 5)
+        contours, hierarchy =   cv2.findContours(img.copy(),cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+
+        label = {
+            'points' : []
+        }
+
+        for contour in contours:
+            for [[x,y]] in contour:
+                label['points'].append([float(x),float(y)])
+
+        with open('{}/labels/{}.json'.format(folder,name), 'w') as f:
+            json.dump(label, f)
+
+        img2 = cv2.drawContours(img2, contours, -1, (0,255,0), 3)
+
+        # cv2.imshow('Contours', img2)
+        # cv2.waitKey(0)
+        # cv2.destroyAllWindows()
+        # img2 = cv2.drawContours(img2.copy(), contours, -1, (0,255,0), 3)
+
+        cv2.imwrite('{}/render/{}.png'.format(folder,name), img2)
 
 
-contours, hierarchy =   cv2.findContours(thresh.copy(),cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
-epsilon = 0.1*cv.arcLength(cnt,True)
-approx = cv.approxPolyDP(cnt,epsilon,True)
-
-cv2.drawContours(img, approx, -1, (0,255,0), 3)
-cv2.imshow('Contours', img)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+if __name__ == "__main__":
+    get_polygons("data")
