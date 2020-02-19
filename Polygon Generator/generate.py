@@ -1,10 +1,11 @@
 import cv2, glob, pathlib, json
 import numpy as np
+from tqdm import tqdm
 
 
 def get_polygons(folder, currency):
 
-    for apath in sorted(glob.glob('{}/{}/images/*.png'.format(folder,currency))):
+    for apath in tqdm(sorted(glob.glob('{}/{}/images/*.png'.format(folder,currency)))):
         name = pathlib.Path(apath).stem
 
         img = cv2.imread('{}'.format(apath), 0)
@@ -35,4 +36,4 @@ def get_polygons(folder, currency):
 
 
 if __name__ == "__main__":
-    get_polygons("data", "RM100")
+    get_polygons("data", "RM50")
