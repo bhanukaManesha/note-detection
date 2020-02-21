@@ -37,7 +37,9 @@ def get_polygons(folder, currency):
         if simplepolygon.type == 'MultiPolygon':
             points = []
             for polygon in simplepolygon:
-                points.append(list(polygon.exterior.coords))
+                subpoints = list(polygon.exterior.coords)
+                for subpoint in subpoints:
+                    points.append(subpoint)
 
         elif simplepolygon.type == 'Polygon':
             points = list(simplepolygon.exterior.coords)
